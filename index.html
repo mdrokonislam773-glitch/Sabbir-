@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAAO & কৃষি চাকরি কর্নার | Agri NextGen</title>
+    <title>SAAO ও কৃষি চাকরি কর্নার | Agri NextGen</title>
     <style>
         body { 
             font-family: 'SolaimanLipi', Arial, sans-serif; 
@@ -144,13 +144,13 @@
     <!-- ⏱️ আনলিমিটেড পরীক্ষা সেকশন -->
     <div id="quiz-section" class="content-box" style="display: block;">
         <div class="quiz-header">
-            <span>⏱️ আনলিমিটেড মডেল টেস্ট ও পরীক্ষা</span>
-            <div class="timer-box">সময় বাকি: <span id="time-left">30</span> সেকেন্ড</div>
+            <span id="quiz-progress-title">⏱️ মডেল টেস্ট (প্রশ্ন ১/৪০)</span>
+            <div class="timer-box">পরীক্ষার সময় বাকি: <span id="time-left">900</span> সেকেন্ড</div>
         </div>
         <div class="question" id="quiz-question">প্রশ্ন লোড হচ্ছে...</div>
         <div class="options" id="quiz-options"></div>
         <div class="result" id="quiz-result"></div>
-        <button class="next-btn" id="next-btn" onclick="loadProportionalRandomQuestion()">পরবর্তী প্রশ্ন ➔</button>
+        <button class="next-btn" id="next-btn" onclick="nextQuizQuestion()">পরবর্তী প্রশ্ন ➔</button>
     </div>
 
     <!-- 📥 পিডিএফ ও অনলাইন নোটস সেকশন -->
@@ -232,7 +232,7 @@
 
             <div id="bulkAdminBox" class="inline-admin-box" style="background: #e3f2fd; border-color: #0d47a1;">
                 <h4 style="margin: 0 0 8px 0; color: #0d47a1;">📥 Bulk Import (AI থেকে একসাথে একাধিক প্রশ্ন পেস্ট করুন)</h4>
-                <textarea id="bulkDataBox" rows="4" placeholder="{ question: '...', options: [...] }, ..." style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px;"></textarea>
+                <textarea id="bulkDataBox" rows="6" placeholder="{ question: 'প্রশ্ন...', options: [{text: 'A) ...', isCorrect: true}, ...] }, ..." style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px; font-family: monospace;"></textarea>
                 <button onclick="bulkImportQuestions()" style="background: #0d47a1; color:#fff; border:none; padding:8px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">একসাথে সব প্রশ্ন যুক্ত করুন</button>
             </div>
 
@@ -292,9 +292,13 @@
     let currentMainFolder = '';
     let currentSubCategory = '';
     let currentOpenFolder = '';
-    let quizTimer = null;
-    let timeLeft = 30;
     
+    let examQuestions = [];
+    let currentExamIndex = 0;
+    let examScore = 0;
+    let examTimer = null;
+    let examTimeLeft = 900; // ১৫ মিনিট
+
     window.isAdminLoggedIn = false; 
     window.isMainAdmin = false; 
     window.currentAdminName = "Visitor";
@@ -302,7 +306,7 @@
 
     window.onload = function() {
         renderNoticeBar();
-        loadProportionalRandomQuestion();
+        startNewExamSession();
     };
 
     function renderNoticeBar() {
@@ -396,25 +400,32 @@
         let subFolderBox = document.getElementById('subFolderCreateBox');
 
         if (window.isAdminLoggedIn) {
-            if(qAdminBox) qAdminBox.style.display = 'block';
-            if(bulkAdminBox) bulkAdminBox.style.display = 'block';
             if(nAdminBox) nAdminBox.style.display = 'block';
-            if(subFolderBox) subFolderBox.style.display = 'block';
 
             if (window.isMainAdmin) {
+                if(qAdminBox) qAdminBox.style.display = 'block';
+                if(bulkAdminBox) bulkAdminBox.style.display = 'block';
                 if(mainFolderBox) mainFolderBox.style.display = 'block';
                 if(mainNoteFolderBox) mainNoteFolderBox.style.display = 'block';
+                if(subFolderBox) subFolderBox.style.display = 'block';
             } else {
-                if(mainFolderBox) mainFolderBox.style.display = 'none';
-                if(mainNoteFolderBox) mainNoteFolderBox.style.display = 'none';
+                if(qAdminBox) qAdminBox.style.display = 'none';
+                if(bulkAdminBox) qAdminBox.style.display = 'none';
+                if(mainFolderBox) qAdminBox.style.display = 'none';
+                if(mainNoteFolderBox) qAdminBox.style.display = 'none';
+                if(subFolderBox) subFolderBox.style.display = 'none';
             }
         } else {
             if(qAdminBox) qAdminBox.style.display = 'none';
-            if(bulkAdminBox) bulkAdminBox.style.display = 'none';
+            if(bulkAdminBox) qAdminBox.style.display = 'none';
             if(nAdminBox) nAdminBox.style.display = 'none';
-            if(mainFolderBox) mainFolderBox.style.display = 'none';
-            if(mainNoteFolderBox) mainNoteFolderBox.style.display = 'none';
-            if(subFolderBox) subFolderBox.style.display = 'none';
+            if(mainFolderBox) qAdminBox.style.display = 'none';
+            if(mainNoteFolderBox) qAdminBox.style.display = 'none';
+            if(subFolderBox) qAdminBox.style.display = 'none';
+        }
+        
+        if(currentActiveTab === 'qb-section' && currentMainFolder && currentSubCategory) {
+            openSubCategory(currentMainFolder, currentSubCategory);
         }
     }
 
@@ -463,13 +474,14 @@
             delete questionBank[folderName];
             saveData();
             renderQuestionBankFolders();
-            loadProportionalRandomQuestion();
+            startNewExamSession();
             alert("✅ ফোল্ডারটি ডিলিট করা হয়েছে!");
         }
     }
 
     function editSubCategoryFolder(folderName, oldCat, event) {
         event.stopPropagation();
+        if(!window.isMainAdmin) { alert("❌ ক্যাটাগরি এডিট করার অনুমতি কেবল মেইন এডমিনের আছে!"); return; }
         let newCat = prompt("ক্যাটাগরির নতুন নাম দিন:", oldCat);
         if(!newCat || newCat.trim() === "" || newCat === oldCat) return;
         newCat = newCat.trim();
@@ -489,12 +501,13 @@
             delete questionBank[folderName][category];
             saveData();
             openMainFolder(folderName);
-            loadProportionalRandomQuestion();
+            startNewExamSession();
             alert("✅ ক্যাটাগরি ডিলিট করা হয়েছে!");
         }
     }
 
     function createSubCategoryFolder() {
+        if(!window.isMainAdmin) { alert("⚠️ ক্যাটাগরি তৈরির অনুমতি কেবল মেইন এডমিনের আছে!"); return; }
         let subName = document.getElementById('newSubCategoryInput').value.trim();
         if(!subName) { alert("⚠️ ক্যাটাগরির নাম দিন!"); return; }
         if(!questionBank[currentMainFolder]) {
@@ -554,17 +567,48 @@
     }
 
     function deleteSingleQuestion(folderName, category, qIndex) {
-        if(!window.isMainAdmin) { alert("⚠️ আপনার প্রশ্ন ডিলিট করার অনুমতি নেই!"); return; }
+        if(!window.isMainAdmin) { alert("⚠️ প্রশ্ন ডিলিট করার অনুমতি কেবল মেইন এডমিনের আছে!"); return; }
         if(confirm("⚠️ এই প্রশ্নটি ডিলিট করতে চান?")) {
             questionBank[folderName][category].splice(qIndex, 1);
             saveData();
             openSubCategory(folderName, category);
-            loadProportionalRandomQuestion();
+            startNewExamSession();
         }
     }
 
+    function editSingleQuestion(folderName, category, qIndex) {
+        if(!window.isMainAdmin) { alert("⚠️ প্রশ্ন এডিট বা সংশোধন করার অনুমতি কেবল মেইন এডমিনের আছে!"); return; }
+        let qObj = questionBank[folderName][category][qIndex];
+        
+        let newQText = prompt("প্রশ্নটি সংশোধন করুন:", qObj.question);
+        if(newQText === null) return;
+        
+        let newOptA = prompt("অপশন A সংশোধন করুন:", qObj.options[0] ? qObj.options[0].text.replace(/^[A-D]\)\s*/, '') : '');
+        let newOptB = prompt("অপশন B সংশোধন করুন:", qObj.options[1] ? qObj.options[1].text.replace(/^[A-D]\)\s*/, '') : '');
+        let newOptC = prompt("অপশন C সংশোধন করুন:", qObj.options[2] ? qObj.options[2].text.replace(/^[A-D]\)\s*/, '') : '');
+        let newOptD = prompt("অপশন D সংশোধন করুন:", qObj.options[3] ? qObj.options[3].text.replace(/^[A-D]\)\s*/, '') : '');
+        let newCorrect = prompt("সঠিক উত্তর কোন অপশনটি? (0 দিন A এর জন্য, 1 দিন B, 2 দিন C, 3 দিন D)", "0");
+
+        if(!newQText.trim()) { alert("⚠️ প্রশ্ন খালি রাখা যাবে না!"); return; }
+
+        let correctIdx = parseInt(newCorrect) || 0;
+
+        qObj.question = newQText.trim();
+        qObj.options = [
+            { text: "A) " + (newOptA || ''), isCorrect: correctIdx === 0 },
+            { text: "B) " + (newOptB || ''), isCorrect: correctIdx === 1 },
+            { text: "C) " + (newOptC || ''), isCorrect: correctIdx === 2 },
+            { text: "D) " + (newOptD || ''), isCorrect: correctIdx === 3 }
+        ];
+
+        saveData();
+        openSubCategory(folderName, category);
+        startNewExamSession();
+        alert("✅ প্রশ্ন সফলভাবে আপডেট ও সংশোধন করা হয়েছে!");
+    }
+
     function deleteSingleNote(folderName, nIndex) {
-        if(!window.isMainAdmin) { alert("⚠️ আপনার নোট ডিলিট করার অনুমতি নেই!"); return; }
+        if(!window.isMainAdmin) { alert("⚠️ নোট ডিলিট করার অনুমতি কেবল মেইন এডমিনের আছে!"); return; }
         if(confirm("⚠️ এই নোটটি ডিলিট করতে চান?")) {
             noteBank[folderName].splice(nIndex, 1);
             saveData();
@@ -580,6 +624,7 @@
     }
 
     function addNewQuestion() {
+        if(!window.isMainAdmin) { alert("⚠️ প্রশ্ন যুক্ত করার অনুমতি কেবল মেইন এডমিনের আছে!"); return; }
         let q = document.getElementById('newQ').value;
         let optA = document.getElementById('optA').value;
         let optB = document.getElementById('optB').value;
@@ -598,7 +643,7 @@
 
         let newObj = {
             question: q,
-            addedBy: window.currentAdminName || "অজানা এডমিন", // লেখকের নাম ট্র্যাক করা হচ্ছে
+            addedBy: window.currentAdminName || "মেইন এডমিন",
             options: [
                 { text: "A) " + optA, isCorrect: correctIdx === 0 },
                 { text: "B) " + optB, isCorrect: correctIdx === 1 },
@@ -617,18 +662,24 @@
         document.getElementById('optC').value = '';
         document.getElementById('optD').value = '';
         openSubCategory(currentMainFolder, currentSubCategory);
-        loadProportionalRandomQuestion();
+        startNewExamSession();
     }
 
     function bulkImportQuestions() {
-        let rawData = document.getElementById('bulkDataBox').value;
-        if(!rawData.trim()) { alert("⚠️ ডাটা পেস্ট করুন!"); return; }
+        if(!window.isMainAdmin) { alert("⚠️ বাল্ক প্রশ্ন যুক্ত করার অনুমতি কেবল মেইন এডমিনের আছে!"); return; }
+        let rawData = document.getElementById('bulkDataBox').value.trim();
+        if(!rawData) { alert("⚠️ ডাটা পেস্ট করুন!"); return; }
 
         try {
-            let parsedQuestions = eval("[" + rawData + "]");
-            // Bulk প্রশ্নের সাথে বর্তমান এডমিনের নাম যুক্ত করে দেওয়া
+            let formattedData = rawData;
+            if(!formattedData.startsWith("[")) formattedData = "[" + formattedData;
+            if(!formattedData.endsWith("]")) formattedData = formattedData + "]";
+
+            let parsedQuestions = eval("(" + formattedData + ")");
+            if(!Array.isArray(parsedQuestions)) throw new Error("Invalid array");
+
             parsedQuestions.forEach(item => {
-                if(!item.addedBy) item.addedBy = window.currentAdminName || "অজানা এডমিন";
+                if(!item.addedBy) item.addedBy = window.currentAdminName || "মেইন এডমিন";
             });
 
             if(!questionBank[currentMainFolder][currentSubCategory]) {
@@ -639,9 +690,9 @@
             alert("✅ সফলভাবে " + parsedQuestions.length + " টি প্রশ্ন যুক্ত করা হয়েছে!");
             document.getElementById('bulkDataBox').value = '';
             openSubCategory(currentMainFolder, currentSubCategory);
-            loadProportionalRandomQuestion();
+            startNewExamSession();
         } catch (err) {
-            alert("❌ ফরম্যাট সঠিক নয়!");
+            alert("❌ ফরম্যাট সঠিক নয়! অনুগ্রহ করে ঠিকমতো পেস্ট করুন।");
         }
     }
 
@@ -840,84 +891,127 @@
             return;
         }
 
+        // ভিজিটর এবং এডমিন উভয়ই যাতে প্রশ্ন ও অপশন দেখতে পারে তার জন্য পারফেক্ট রেন্ডারিং
         questions.forEach((q, idx) => {
             let item = document.createElement('div');
             item.className = 'item-card';
-            let optionsText = q.options.map(o => `<br><small>${o.text} ${o.isCorrect ? '✅ (সঠিক)' : ''}</small>`).join('');
             
-            // লেখকের নাম দেখার ট্যাগ (যেহেতু এডমিন লগইন করা থাকলে দেখা যাবে)
-            let authorBadge = q.addedBy ? `<br><small style="color: #d32f2f; font-weight: bold;">✍️ যুক্ত করেছেন: ${q.addedBy}</small>` : '';
+            let optionsText = q.options.map(o => {
+                let correctTag = (window.isMainAdmin && o.isCorrect) ? ' ✅ (সঠিক)' : '';
+                return `<br><small>${o.text}${correctTag}</small>`;
+            }).join('');
             
-            let deleteBtnHtml = window.isMainAdmin ? `<button class="btn-delete" style="display:inline-block; margin-top:5px;" onclick="deleteSingleQuestion('${folderName}', '${category}', ${idx})">প্রশ্ন ডিলিট</button>` : '';
+            let authorBadge = (window.isMainAdmin && q.addedBy) ? `<br><small style="color: #d32f2f; font-weight: bold;">✍️ যুক্ত করেছেন: ${q.addedBy}</small>` : '';
+            
+            let adminActionButtons = '';
+            if (window.isMainAdmin) {
+                let editBtnHtml = `<button class="btn-edit" style="display:inline-block; margin-top:5px; background:#ff9800 !important;" onclick="editSingleQuestion('${folderName}', '${category}', ${idx})">প্রশ্ন এডিট</button>`;
+                let deleteBtnHtml = `<button class="btn-delete" style="display:inline-block; margin-top:5px; margin-left: 5px;" onclick="deleteSingleQuestion('${folderName}', '${category}', ${idx})">প্রশ্ন ডিলিট</button>`;
+                adminActionButtons = `<br><div style="margin-top:5px;">${editBtnHtml}${deleteBtnHtml}</div>`;
+            }
 
-            item.innerHTML = `<div><strong>${idx + 1}. ${q.question}</strong>${optionsText}${authorBadge}<br>${deleteBtnHtml}</div>`;
+            item.innerHTML = `<div><strong>${idx + 1}. ${q.question}</strong>${optionsText}${authorBadge}${adminActionButtons}</div>`;
             qContainer.appendChild(item);
         });
     }
 
-    function backToMainFolders() { renderQuestionBankFolders(); }
-    function backToSubFolders() { openMainFolder(currentMainFolder); }
+    function backToMainFolders() {
+        document.getElementById('qbSubFolderContainer').style.display = 'none';
+        document.getElementById('qbQuestionList').style.display = 'none';
+        renderQuestionBankFolders();
+    }
 
-    function loadProportionalRandomQuestion() {
-        if(quizTimer) clearInterval(quizTimer);
-        document.getElementById('quiz-result').innerHTML = '';
-        document.getElementById('next-btn').style.display = 'none';
+    function backToSubFolders() {
+        document.getElementById('qbQuestionList').style.display = 'none';
+        openMainFolder(currentMainFolder);
+    }
 
-        let weightedPool = [];
-        folders.forEach((folder, idx) => {
+    function startNewExamSession() {
+        if(examTimer) clearInterval(examTimer);
+        examScore = 0;
+        currentExamIndex = 0;
+        examQuestions = [];
+
+        let allFolderData = {};
+        let totalAvailableQuestions = 0;
+
+        folders.forEach(folder => {
             let catObj = questionBank[folder] || {};
-            let totalFolderQ = 0;
-            for(let cat in catObj) totalFolderQ += catObj[cat].length;
-
-            if(totalFolderQ > 0) {
-                let weight = (idx === 0) ? 4 : 2; 
-                for(let w = 0; w < weight; w++) weightedPool.push(folder);
+            let fQuestions = [];
+            for(let cat in catObj) {
+                fQuestions = fQuestions.concat(catObj[cat].map(q => ({...q, folderName: folder})));
             }
+            allFolderData[folder] = fQuestions;
+            totalAvailableQuestions += fQuestions.length;
         });
 
-        if(weightedPool.length === 0) {
+        if(totalAvailableQuestions === 0) {
             document.getElementById('quiz-question').innerText = "কোনো প্রশ্ন নেই। প্রশ্নব্যাংকের ফোল্ডারে গিয়ে প্রশ্ন যোগ করুন।";
             document.getElementById('quiz-options').innerHTML = "";
+            document.getElementById('quiz-progress-title').innerText = "⏱️ মডেল টেস্ট";
             document.querySelector('.timer-box').style.display = 'none';
             return;
         }
 
-        let selectedFolder = weightedPool[Math.floor(Math.random() * weightedPool.length)];
-        let allFolderQuestions = [];
-        let catObj = questionBank[selectedFolder] || {};
-        for(let cat in catObj) allFolderQuestions = allFolderQuestions.concat(catObj[cat]);
+        let targetCount = Math.min(40, totalAvailableQuestions);
+        let folderWeights = folders.map((f, idx) => (idx === 0 ? 3 : 1)); 
+        let totalWeight = folderWeights.reduce((a, b) => a + b, 0);
 
-        if(allFolderQuestions.length === 0) return;
+        folders.forEach((folder, idx) => {
+            let fPool = [...allFolderData[folder]];
+            fPool.sort(() => Math.random() - 0.5);
+            let quota = Math.round((folderWeights[idx] / totalWeight) * targetCount);
+            if(quota < 1 && fPool.length > 0) quota = 1;
 
-        let currentQuestion = allFolderQuestions[Math.floor(Math.random() * allFolderQuestions.length)];
-        document.getElementById('quiz-question').innerHTML = `<small style="color:#0277bd;">[বিষয়: ${selectedFolder}]</small><br>` + currentQuestion.question;
+            let picked = fPool.slice(0, quota);
+            examQuestions = examQuestions.concat(picked);
+        });
+
+        examQuestions.sort(() => Math.random() - 0.5);
+        if(examQuestions.length > 40) {
+            examQuestions = examQuestions.slice(0, 40);
+        }
+
+        examTimeLeft = 900; // ১৫ মিনিট
+        document.querySelector('.timer-box').style.display = 'block';
+
+        examTimer = setInterval(() => {
+            examTimeLeft--;
+            document.getElementById('time-left').innerText = examTimeLeft;
+            if(examTimeLeft <= 0) {
+                clearInterval(examTimer);
+                finishExamSession(true);
+            }
+        }, 1000);
+
+        loadExamQuestion();
+    }
+
+    function loadExamQuestion() {
+        document.getElementById('quiz-result').innerHTML = '';
+        document.getElementById('next-btn').style.display = 'none';
+
+        if(currentExamIndex >= examQuestions.length) {
+            finishExamSession(false);
+            return;
+        }
+
+        let qObj = examQuestions[currentExamIndex];
+        document.getElementById('quiz-progress-title').innerText = `⏱️ মডেল টেস্ট (প্রশ্ন ${currentExamIndex + 1}/${examQuestions.length})`;
+        document.getElementById('quiz-question').innerHTML = `<small style="color:#0277bd;">[বিষয়: ${qObj.folderName}]</small><br>` + qObj.question;
 
         let optContainer = document.getElementById('quiz-options');
         optContainer.innerHTML = '';
 
-        currentQuestion.options.forEach(opt => {
+        qObj.options.forEach(opt => {
             let btn = document.createElement('button');
             btn.innerText = opt.text;
-            btn.onclick = () => selectOption(btn, opt.isCorrect, currentQuestion);
+            btn.onclick = () => selectExamOption(btn, opt.isCorrect, qObj);
             optContainer.appendChild(btn);
         });
-
-        timeLeft = 30;
-        document.getElementById('time-left').innerText = timeLeft;
-        document.querySelector('.timer-box').style.display = 'block';
-
-        quizTimer = setInterval(() => {
-            timeLeft--;
-            document.getElementById('time-left').innerText = timeLeft;
-            if(timeLeft <= 0) {
-                clearInterval(quizTimer);
-                timeOutQuiz(currentQuestion);
-            }
-        }, 1000);
     }
 
-    function selectOption(selectedBtn, isCorrect, currentQuestion) {
-        if(quizTimer) clearInterval(quizTimer);
+    function selectExamOption(selectedBtn, isCorrect, qObj) {
         document.querySelectorAll('.options button').forEach(b => b.disabled = true);
         let res = document.getElementById('quiz-result');
         if (isCorrect) {
@@ -925,23 +1019,57 @@
             selectedBtn.style.color = "#fff";
             res.style.color = "green";
             res.innerHTML = "✅ সঠিক উত্তর!";
+            examScore++;
         } else {
             selectedBtn.style.backgroundColor = "#e57373";
             selectedBtn.style.color = "#fff";
             res.style.color = "red";
-            let correctOpt = currentQuestion.options.find(o => o.isCorrect);
+            let correctOpt = qObj.options.find(o => o.isCorrect);
             res.innerHTML = "❌ ভুল উত্তর! সঠিক উত্তর: " + (correctOpt ? correctOpt.text : '');
         }
-        document.getElementById('next-btn').style.display = 'block';
+        
+        currentExamIndex++;
+        if(currentExamIndex < examQuestions.length) {
+            document.getElementById('next-btn').innerText = "পরবর্তী প্রশ্ন ➔";
+            document.getElementById('next-btn').style.display = 'block';
+        } else {
+            document.getElementById('next-btn').innerText = "ফলাফল দেখুন 📊";
+            document.getElementById('next-btn').style.display = 'block';
+        }
     }
 
-    function timeOutQuiz(currentQuestion) {
-        document.querySelectorAll('.options button').forEach(b => b.disabled = true);
+    function nextQuizQuestion() {
+        if(currentExamIndex >= examQuestions.length) {
+            finishExamSession(false);
+        } else {
+            loadExamQuestion();
+        }
+    }
+
+    function finishExamSession(isTimeout) {
+        if(examTimer) clearInterval(examTimer);
+        document.querySelector('.timer-box').style.display = 'none';
+        let qContainer = document.getElementById('quiz-question');
+        let optContainer = document.getElementById('quiz-options');
         let res = document.getElementById('quiz-result');
-        res.style.color = "#c62828";
-        let correctOpt = currentQuestion.options.find(o => o.isCorrect);
-        res.innerHTML = "⏰ সময় শেষ! সঠিক উত্তর: " + (correctOpt ? correctOpt.text : '');
-        document.getElementById('next-btn').style.display = 'block';
+        
+        qContainer.innerHTML = isTimeout ? "<h3 style='color:#c62828;>⏰ সময় শেষ!</h3>" : "<h3 style='color:#2e7d32;'>🎉 পরীক্ষা সম্পন্ন হয়েছে!</h3>";
+        
+        let percentage = ((examScore / examQuestions.length) * 100).toFixed(1);
+        
+        optContainer.innerHTML = `<div style="background:#e8f5e9; padding:15px; border-radius:8px; text-align:center; font-size:15px; line-height: 1.6;">
+            📊 <b>আপনার পরীক্ষার ফলাফল:</b><br>
+            মোট প্রশ্ন: <b>${examQuestions.length}</b> টি<br>
+            সঠিক উত্তর: <span style="color:green; font-weight:bold;">${examScore}</span> টি<br>
+            ভুল উত্তর: <span style="color:red; font-weight:bold;">${examQuestions.length - examScore}</span> টি<br>
+            প্রাপ্ত নম্বর (শতাংশ): <span style="color:#0277bd; font-weight:bold;">${percentage}%</span>
+        </div>`;
+        res.innerHTML = "";
+        
+        let nBtn = document.getElementById('next-btn');
+        nBtn.innerText = "🔄 আবার পরীক্ষা দিন";
+        nBtn.style.display = 'block';
+        nBtn.onclick = () => startNewExamSession();
     }
 
     function exportBackup() {
@@ -977,7 +1105,7 @@
                     localStorage.setItem('agri_notice_mode', noticeMode);
                     renderNoticeBar();
                     alert("✅ ব্যাকআপ রিস্টোর হয়েছে!");
-                    loadProportionalRandomQuestion();
+                    startNewExamSession();
                 } else { alert("❌ ফরম্যাট সঠিক নয়!"); }
             } catch (err) { alert("❌ ফাইল পড়তে সমস্যা হয়েছে!"); }
         };
@@ -1024,7 +1152,7 @@
         document.getElementById(sectionId).style.display = 'block';
         evt.currentTarget.classList.add('active');
 
-        if(sectionId === 'quiz-section') loadProportionalRandomQuestion();
+        if(sectionId === 'quiz-section') startNewExamSession();
         if(sectionId === 'qb-section') renderQuestionBankFolders();
         if(sectionId === 'notes-section') renderNoteFolders();
     }
