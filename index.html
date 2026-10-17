@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAAO & কৃষি চাকরি কর্নার | Agri NextGen</title>
+    <style>
+        body { 
+            font-family: 'SolaimanLipi', Arial, sans-serif; 
+            background-color: #f4f7f6; 
+            margin: 0; 
+            padding: 15px; 
+            color: #333; 
+            -webkit-user-select: none; 
+            -moz-user-select: none; 
+            -ms-user-select: none; 
+            user-select: none; 
+        }
+        body.admin-allowed {
+            -webkit-user-select: auto;
+            -moz-user-select: auto;
+            -ms-user-select: auto;
+            user-select: auto;
+        }
+        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; }
+        .admin-dot { position: absolute; top: 15px; right: 20px; width: 14px; height: 14px; background: #2e7d32; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.3); transition: 0.3s; }
+        .admin-dot:hover { transform: scale(1.3); background: #1b5e20; }
+        h1 { text-align: center; color: #2e7d32; margin-top: 0; font-size: 22px; }
+        .sub-title { text-align: center; color: #666; font-size: 13px; margin-bottom: 15px; }
+
+        /* নোটিশ বার স্টাইল */
+        .notice-container { background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 6px; padding: 8px 12px; margin-bottom: 15px; font-weight: bold; color: #1b5e20; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+        .notice-content { overflow: hidden; width: 100%; white-space: nowrap; }
+        .notice-btn-toggle { background: #1b5e20; color: #fff; border: none; padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; margin-left: 10px; flex-shrink: 0; display: none; }
+
+        .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+        .menu-card { background: #e8f5e9; border: 2px solid #a5d6a7; border-radius: 10px; padding: 15px 10px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .menu-card:hover, .menu-card.active { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+        .menu-card .icon { font-size: 26px; display: block; margin-bottom: 5px; }
+        .menu-card .title { font-weight: bold; font-size: 14px; }
+
+        .content-box { display: none; background: #fafafa; border: 1px solid #e0e0e0; padding: 20px; border-radius: 10px; }
+        
+        .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; font-size: 14px; color: #2e7d32; }
+        .timer-box { background: #ffebee; color: #c62828; padding: 5px 10px; border-radius: 6px; border: 1px solid #ffcdd2; }
+        .question { font-size: 16px; font-weight: bold; margin-bottom: 15px; color: #1b5e20; }
+        .options button { display: block; width: 100%; padding: 12px; margin: 8px 0; background: #fff; border: 2px solid #a5d6a7; border-radius: 6px; cursor: pointer; text-align: left; font-size: 15px; transition: 0.2s; }
+        .options button:hover { background: #c8e6c9; }
+        .result { font-weight: bold; margin-top: 15px; font-size: 15px; min-height: 24px; }
+        .next-btn { display: none; margin-top: 15px; width: 100%; padding: 12px; background: #2e7d32; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        
+        .folder-card { background: #fff; border: 2px solid #a5d6a7; padding: 15px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+        .folder-card:hover { background: #e8f5e9; border-color: #2e7d32; }
+        .folder-title { font-weight: bold; color: #1b5e20; font-size: 16px; }
+        
+        .item-card { background: #fff; border: 1px solid #ddd; padding: 12px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .item-card h4 { margin: 0; font-size: 14px; color: #1b5e20; }
+        
+        .btn-group { display: flex; gap: 8px; align-items: center; }
+        .btn-read { padding: 6px 12px; background: #0277bd; color: white; border: none; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; }
+        .btn-download { padding: 6px 12px; background: #2e7d32; color: white; text-decoration: none; border-radius: 4px; font-size: 13px; font-weight: bold; }
+        .btn-delete { background: #d32f2f !important; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .btn-edit { background: #ff9800 !important; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        
+        .note-reader-box { background: #fff; border: 1px solid #ccc; padding: 20px; border-radius: 8px; margin-top: 10px; line-height: 1.6; white-space: pre-line; }
+
+        .admin-panel { display: none; background: #fff; border: 2px dashed #2e7d32; padding: 20px; border-radius: 10px; margin-top: 20px; }
+        .admin-panel input, .admin-panel select, .admin-panel textarea { width: 100%; padding: 10px; margin: 6px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
+        .admin-panel button { width: 100%; padding: 10px; background: #2e7d32; color: #fff; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .sub-admin-item { background: #f1f8e9; padding: 8px 12px; border-radius: 5px; margin-top: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+        .del-admin-btn { background: #d32f2f !important; width: auto !important; padding: 4px 8px !important; font-size: 12px !important; margin: 0 !important; }
+
+        .inline-admin-box { background: #e8f5e9; border: 1px dashed #2e7d32; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: none; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+<div class="container">
+    <div class="admin-dot" onclick="openAdminPrompt()" title="মেইন এডমিন ও ব্যাকআপ প্যানেল"></div>
+
+    <h1>🌱 SAAO ও কৃষি চাকরি কর্নার</h1>
+    <p class="sub-title">Agri NextGen - এর বিশেষ সার্ভিস</p>
+
+    <!-- নোটিশ বার -->
+    <div class="notice-container">
+        <div class="notice-content">
+            <span id="noticeWrapper">
+                <marquee behavior="scroll" direction="left" scrollamount="5" id="runningNoticeText">
+                    📢 স্বাগতম SAAO ও কৃষি চাকরি কর্নার এ! নিয়মিত মডেল টেস্ট ও নোটস পড়ুন।
+                </marquee>
+            </span>
+        </div>
+        <button id="noticeToggleBtn" class="notice-btn-toggle" onclick="toggleNoticeMotion()" title="স্থির বা চলমান করুন">⏸️ পজ/রানিং</button>
+    </div>
+
+    <div class="menu-grid">
+        <div id="tab-quiz" class="menu-card active" onclick="openTab(event, 'quiz-section')">
+            <span class="icon">⏱️</span>
+            <span class="title">আনলিমিটেড পরীক্ষা</span>
+        </div>
+        <div id="tab-notes" class="menu-card" onclick="openTab(event, 'notes-section')">
+            <span class="icon">📥</span>
+            <span class="title">পিডিএফ নোট</span>
+        </div>
+        <div id="tab-qb" class="menu-card" onclick="openTab(event, 'qb-section')">
+            <span class="icon">📚</span>
+            <span class="title">প্রশ্নব্যাংক</span>
+        </div>
+    </div>
+
+    <!-- 🔒 মেইন এডমিন ব্যাকআপ ও নোটিশ বোর্ড কন্ট্রোল প্যানেল -->
+    <div id="adminPanel" class="admin-panel">
+        <h3 style="color: #2e7d32; text-align: center; margin-top:0;">⚙️ মেইন এডমিন ও নোটিশ কন্ট্রোল</h3>
+        <hr style="border:0; height:1px; background:#ddd; margin:10px 0;">
+        
+        <div id="mainAdminNoticeSection" style="display: none; background: #e8f5e9; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+            <h4 style="margin: 0 0 5px 0; color: #1b5e20;">📢 নোটিশ বোর্ডে বার্তা সেট করুন</h4>
+            <input type="text" id="adminNoticeInput" placeholder="এখানে নোটিশ লিখুন...">
+            <label style="font-size: 13px; font-weight: bold; margin-top: 8px; display:block;">নোটিশের স্টাইল:</label>
+            <select id="adminNoticeMode" style="width:100%; padding:8px; margin-bottom:8px; border:1px solid #ccc; border-radius:4px;">
+                <option value="scroll">চলমান (Scrolling)</option>
+                <option value="fixed">স্থির (Static / Fixed)</option>
+            </select>
+            <button onclick="updateNoticeText()" style="background: #2e7d32;">💾 নোটিশ আপডেট করুন</button>
+        </div>
+
+        <div id="mainAdminBackupSection" style="display: none; background: #f1f8e9; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+            <h4 style="margin: 0 0 5px 0; color: #1b5e20;">💾 ফুল ডেটা ব্যাকআপ (শুধুমাত্র মেইন এডমিন)</h4>
+            <button onclick="exportBackup()" style="background: #0277bd; margin-bottom: 6px;">📥 ব্যাকআপ ডাউনলোড (Export)</button>
+            <input type="file" id="backupFileIn" accept=".json" onchange="importBackup(event)" style="background: #fff; padding: 4px; font-size: 12px;">
+        </div>
+
+        <div id="mainAdminControls" style="display: none; border-top: 1px dashed #2e7d32; padding-top: 12px;">
+            <h4 style="margin: 5px 0; color: #2e7d32;">🔑 সাব-এডমিন অ্যাক্সেস ম্যানেজমেন্ট</h4>
+            <input type="text" id="subAdminName" placeholder="এডমিনের নাম">
+            <input type="text" id="subAdminPin" placeholder="পাসওয়ার্ড পিন">
+            <button onclick="createSubAdmin()" style="background: #1b5e20;">➕ নতুন এডমিন পিন তৈরি করুন</button>
+            <div id="subAdminList" style="margin-top: 5px;">কোনো সাব-এডমিন নেই।</div>
+        </div>
+
+        <button onclick="closeAdminPanel()" style="background: #666; margin-top: 15px;">✖️ প্যানেল বন্ধ করুন</button>
+    </div>
+
+    <!-- ⏱️ আনলিমিটেড পরীক্ষা সেকশন -->
+    <div id="quiz-section" class="content-box" style="display: block;">
+        <div class="quiz-header">
+            <span>⏱️ আনলিমিটেড মডেল টেস্ট ও পরীক্ষা</span>
+            <div class="timer-box">সময় বাকি: <span id="time-left">30</span> সেকেন্ড</div>
+        </div>
+        <div class="question" id="quiz-question">প্রশ্ন লোড হচ্ছে...</div>
+        <div class="options" id="quiz-options"></div>
+        <div class="result" id="quiz-result"></div>
+        <button class="next-btn" id="next-btn" onclick="loadProportionalRandomQuestion()">পরবর্তী প্রশ্ন ➔</button>
+    </div>
+
+    <!-- 📥 পিডিএফ ও অনলাইন নোটস সেকশন -->
+    <div id="notes-section" class="content-box">
+        <h3 style="margin-top:0; color:#2e7d32;">📥 শিক্ষণীয় নোটস ও পিডিএফ</h3>
+        
+        <div id="mainNoteFolderCreateBox" style="margin-bottom: 15px; display:none;">
+            <input type="text" id="newNoteFolderName" placeholder="নতুন নোট ফোল্ডারের নাম লিখুন..." style="width: 70%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+            <button onclick="createNoteFolder()" style="width: 28%; padding: 8px; background: #0d47a1; color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">➕ ফোল্ডার তৈরি</button>
+        </div>
+
+        <div id="noteFolderContainer"></div>
+        
+        <div id="noteItemListContainer" style="display: none;">
+            <button onclick="backToNoteFolders()" style="background: #666; width: auto; padding: 6px 12px; margin-bottom: 10px; font-size: 13px;">⬅️ ফোল্ডার লিস্টে ফিরে যান</button>
+            <h4 id="activeNoteFolderName" style="color: #0d47a1; margin-top: 5px;"></h4>
+            
+            <div id="noteAdminBox" class="inline-admin-box">
+                <h4 style="margin: 0 0 8px 0; color: #0d47a1;">➕ এই ফোল্ডারে নতুন নোট যোগ করুন</h4>
+                <input type="text" id="noteTitle" placeholder="নোটের শিরোনাম" style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px;">
+                <input type="text" id="noteLink" placeholder="গুগল ড্রাইভ বা ডাউনলোড লিংক (ঐচ্ছিক)" style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px;">
+                <textarea id="noteContent" rows="4" placeholder="নোটের মূল বিবরণ বা আর্টিকেল এখানে লিখুন..." style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px;"></textarea>
+                <button onclick="addNewNote()" style="background: #0d47a1; color:#fff; border:none; padding:8px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">নোট প্রকাশ করুন</button>
+            </div>
+
+            <div id="noteCardsContainer"></div>
+        </div>
+
+        <div id="noteReaderView" style="display: none;">
+            <button onclick="backToNoteList()" style="background: #666; width: auto; padding: 6px 12px; margin-bottom: 10px; font-size: 13px;">⬅️ নোট লিস্টে ফিরে যান</button>
+            <h3 id="readerNoteTitle" style="color: #0d47a1; margin-top: 5px;"></h3>
+            <div id="readerDownloadBtnArea" style="margin-bottom: 10px;"></div>
+            <div id="readerNoteContent" class="note-reader-box"></div>
+        </div>
+    </div>
+
+    <!-- 📚 প্রশ্নব্যাংক সেকশন -->
+    <div id="qb-section" class="content-box">
+        <h3 style="margin-top:0; color:#2e7d32;">📚 প্রশ্নব্যাংক (বিষয়ভিত্তিক)</h3>
+        
+        <div id="mainFolderCreateBox" style="margin-bottom: 15px; display:none;">
+            <input type="text" id="newFolderName" placeholder="নতুন বিষয়ের ফোল্ডার নাম লিখুন..." style="width: 70%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+            <button onclick="createFolder()" style="width: 28%; padding: 8px; background: #1b5e20; color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">➕ ফোল্ডার তৈরি</button>
+        </div>
+
+        <div id="qbFolderContainer"></div>
+        
+        <div id="qbSubFolderContainer" style="display: none;">
+            <button onclick="backToMainFolders()" style="background: #666; width: auto; padding: 6px 12px; margin-bottom: 10px; font-size: 13px;">⬅️ বিষয়সমূহের লিস্টে ফিরে যান</button>
+            <h4 id="activeMainFolderName" style="color: #1b5e20; margin-top: 5px;"></h4>
+            
+            <div id="subFolderCreateBox" style="margin-bottom: 15px; background: #e8f5e9; padding: 10px; border-radius: 6px; display:none;">
+                <input type="text" id="newSubCategoryInput" placeholder="নতুন ক্যাটাগরি বা সাব-ফোল্ডারের নাম (যেমন: বিগত সাল: ২০২৩)" style="width: 70%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <button onclick="createSubCategoryFolder()" style="width: 28%; padding: 8px; background: #2e7d32; color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">➕ ক্যাটাগরি তৈরি</button>
+            </div>
+
+            <div id="subCategoryCardsContainer"></div>
+        </div>
+
+        <div id="qbQuestionList" style="display: none;">
+            <button onclick="backToSubFolders()" style="background: #666; width: auto; padding: 6px 12px; margin-bottom: 10px; font-size: 13px;">⬅️ ক্যাটাগরি লিস্টে ফিরে যান</button>
+            <h4 id="activeSubFolderName" style="color: #1b5e20; margin-top: 5px;"></h4>
+
+            <div id="questionAdminBox" class="inline-admin-box">
+                <h4 style="margin: 0 0 8px 0; color: #1b5e20;">➕ এই ক্যাটাগরিতে নতুন প্রশ্ন যোগ করুন</h4>
+                <input type="text" id="newQ" placeholder="প্রশ্ন লিখুন..." style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px;">
+                <input type="text" id="optA" placeholder="অপশন A" style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px;">
+                <input type="text" id="optB" placeholder="অপশন B" style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px;">
+                <input type="text" id="optC" placeholder="অপশন C" style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px;">
+                <input type="text" id="optD" placeholder="অপশন D" style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px;">
+                <select id="correctOpt" style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px;">
+                    <option value="0">সঠিক উত্তর: অপশন A</option>
+                    <option value="1">সঠিক উত্তর: অপশন B</option>
+                    <option value="2">সঠিক উত্তর: অপশন C</option>
+                    <option value="3">সঠিক উত্তর: অপশন D</option>
+                </select>
+                <button onclick="addNewQuestion()" style="background: #1b5e20; color:#fff; border:none; padding:8px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">প্রশ্ন যুক্ত করুন</button>
+            </div>
+
+            <div id="bulkAdminBox" class="inline-admin-box" style="background: #e3f2fd; border-color: #0d47a1;">
+                <h4 style="margin: 0 0 8px 0; color: #0d47a1;">📥 Bulk Import (AI থেকে একসাথে একাধিক প্রশ্ন পেস্ট করুন)</h4>
+                <textarea id="bulkDataBox" rows="4" placeholder="{ question: '...', options: [...] }, ..." style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px;"></textarea>
+                <button onclick="bulkImportQuestions()" style="background: #0d47a1; color:#fff; border:none; padding:8px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">একসাথে সব প্রশ্ন যুক্ত করুন</button>
+            </div>
+
+            <div id="qbQuestionsContainer"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('keydown', function (e) {
+        if (!window.isAdminLoggedIn) {
+            if (e.key === 'PrintScreen' || 
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) || 
+                (e.ctrlKey && e.key === 'u')) {
+                alert("⚠️ এই ওয়েবসাইটের কন্টেন্ট সুরক্ষিত। স্ক্রিনশট বা কপি করা নিষেধ!");
+                e.preventDefault();
+                return false;
+            }
+        }
+    });
+
+    let defaultFolders = [
+        "১. সংশ্লিষ্ট কৃষি বিষয় (টেকনিক্যাল)",
+        "২. বাংলা",
+        "৩. ইংরেজি",
+        "৪. সাধারণ জ্ঞান ও বিজ্ঞান-প্রযুক্তি"
+    ];
+
+    let folders = JSON.parse(localStorage.getItem('agri_folders')) || defaultFolders;
+    let siteNotice = localStorage.getItem('agri_notice') || "📢 স্বাগতম SAAO ও কৃষি চাকরি কর্নার এ! নিয়মিত মডেল টেস্ট ও নোটস পড়ুন।";
+    let noticeMode = localStorage.getItem('agri_notice_mode') || "scroll";
+    
+    let questionBank = JSON.parse(localStorage.getItem('agri_questions')) || {
+        "১. সংশ্লিষ্ট কৃষি বিষয় (টেকনিক্যাল)": { "সাধারণ প্রশ্ন": [] },
+        "২. বাংলা": { "সাধারণ প্রশ্ন": [] },
+        "৩. ইংরেজি": { "সাধারণ প্রশ্ন": [] },
+        "৪. সাধারণ জ্ঞান ও বিজ্ঞান-প্রযুক্তি": { "সাধারণ প্রশ্ন": [] }
+    };
+
+    let defaultNoteFolders = [
+        "১. সংশ্লিষ্ট কৃষি বিষয় (নোটস)",
+        "২. বাংলা নোটস",
+        "৩. ইংরেজি নোটস",
+        "৪. সাধারণ জ্ঞান ও বিজ্ঞান-প্রযুক্তি নোটস"
+    ];
+
+    let noteFolders = JSON.parse(localStorage.getItem('agri_note_folders')) || defaultNoteFolders;
+    let noteBank = JSON.parse(localStorage.getItem('agri_notes')) || {
+        "১. সংশ্লিষ্ট কৃষি বিষয় (নোটস)": [],
+        "২. বাংলা নোটস": [],
+        "৩. ইংরেজি নোটস": [],
+        "৪. সাধারণ জ্ঞান ও বিজ্ঞান-প্রযুক্তি নোটস": []
+    };
+
+    let subAdmins = JSON.parse(localStorage.getItem('agri_sub_admins')) || [];
+    let currentActiveTab = 'quiz-section';
+    let currentMainFolder = '';
+    let currentSubCategory = '';
+    let currentOpenFolder = '';
+    let quizTimer = null;
+    let timeLeft = 30;
+    
+    window.isAdminLoggedIn = false; 
+    window.isMainAdmin = false; 
+    window.currentAdminName = "Visitor";
+    const MAIN_PASSWORD = "2300225018miraz";
+
+    window.onload = function() {
+        renderNoticeBar();
+        loadProportionalRandomQuestion();
+    };
+
+    function renderNoticeBar() {
+        let wrapper = document.getElementById('noticeWrapper');
+        if (noticeMode === "scroll") {
+            wrapper.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="5" id="runningNoticeText">${siteNotice}</marquee>`;
+        } else {
+            wrapper.innerHTML = `<div style="text-align: center; width: 100%;" id="runningNoticeText">${siteNotice}</div>`;
+        }
+    }
+
+    function toggleNoticeMotion() {
+        if (!window.isAdminLoggedIn) return;
+        noticeMode = (noticeMode === "scroll") ? "fixed" : "scroll";
+        localStorage.setItem('agri_notice_mode', noticeMode);
+        renderNoticeBar();
+    }
+
+    function openAdminPrompt() {
+        let pin = prompt("🔐 এডমিন পাসওয়ার্ড বা পিন দিন:");
+        if (!pin) return;
+
+        if (pin === MAIN_PASSWORD) {
+            window.isAdminLoggedIn = true;
+            window.isMainAdmin = true; 
+            window.currentAdminName = "মেইন এডমিন (Miraz)";
+            document.body.classList.add('admin-allowed');
+            document.getElementById('adminPanel').style.display = 'block';
+            document.getElementById('mainAdminControls').style.display = 'block';
+            document.getElementById('mainAdminBackupSection').style.display = 'block'; 
+            document.getElementById('mainAdminNoticeSection').style.display = 'block';
+            document.getElementById('adminNoticeInput').value = siteNotice;
+            document.getElementById('adminNoticeMode').value = noticeMode;
+            document.getElementById('noticeToggleBtn').style.display = 'inline-block';
+            renderSubAdminList();
+            updateInlineAdminVisibility();
+            alert("✅ মেইন এডমিন হিসেবে লগইন হয়েছে!");
+            refreshCurrentView();
+        } else {
+            let foundAdmin = subAdmins.find(admin => admin.pin === pin);
+            if (foundAdmin) {
+                window.isAdminLoggedIn = true;
+                window.isMainAdmin = false; 
+                window.currentAdminName = foundAdmin.name;
+                document.body.classList.add('admin-allowed');
+                document.getElementById('adminPanel').style.display = 'block';
+                document.getElementById('mainAdminControls').style.display = 'none';
+                document.getElementById('mainAdminBackupSection').style.display = 'none'; 
+                document.getElementById('mainAdminNoticeSection').style.display = 'none';
+                document.getElementById('noticeToggleBtn').style.display = 'inline-block';
+                updateInlineAdminVisibility();
+                alert("✅ স্বাগতম " + foundAdmin.name + "!");
+                refreshCurrentView();
+            } else {
+                alert("❌ ভুল পাসওয়ার্ড!");
+            }
+        }
+    }
+
+    function closeAdminPanel() {
+        window.isAdminLoggedIn = false;
+        window.isMainAdmin = false;
+        window.currentAdminName = "Visitor";
+        document.body.classList.remove('admin-allowed');
+        document.getElementById('adminPanel').style.display = 'none';
+        document.getElementById('noticeToggleBtn').style.display = 'none';
+        updateInlineAdminVisibility();
+        refreshCurrentView();
+    }
+
+    function updateNoticeText() {
+        if(!window.isMainAdmin) { alert("⚠️ নোটিশ আপডেট করার অনুমতি কেবল মেইন এডমিনের আছে!"); return; }
+        let newNotice = document.getElementById('adminNoticeInput').value.trim();
+        let newMode = document.getElementById('adminNoticeMode').value;
+        if(!newNotice) { alert("⚠️ নোটিশের লেখা খালি রাখা যাবে না!"); return; }
+        
+        siteNotice = newNotice;
+        noticeMode = newMode;
+        localStorage.setItem('agri_notice', siteNotice);
+        localStorage.setItem('agri_notice_mode', noticeMode);
+        renderNoticeBar();
+        alert("✅ নোটিশ সফলভাবে আপডেট হয়েছে!");
+    }
+
+    function updateInlineAdminVisibility() {
+        let qAdminBox = document.getElementById('questionAdminBox');
+        let bulkAdminBox = document.getElementById('bulkAdminBox');
+        let nAdminBox = document.getElementById('noteAdminBox');
+        let mainFolderBox = document.getElementById('mainFolderCreateBox');
+        let mainNoteFolderBox = document.getElementById('mainNoteFolderCreateBox');
+        let subFolderBox = document.getElementById('subFolderCreateBox');
+
+        if (window.isAdminLoggedIn) {
+            if(qAdminBox) qAdminBox.style.display = 'block';
+            if(bulkAdminBox) bulkAdminBox.style.display = 'block';
+            if(nAdminBox) nAdminBox.style.display = 'block';
+            if(subFolderBox) subFolderBox.style.display = 'block';
+
+            if (window.isMainAdmin) {
+                if(mainFolderBox) mainFolderBox.style.display = 'block';
+                if(mainNoteFolderBox) mainNoteFolderBox.style.display = 'block';
+            } else {
+                if(mainFolderBox) mainFolderBox.style.display = 'none';
+                if(mainNoteFolderBox) mainNoteFolderBox.style.display = 'none';
+            }
+        } else {
+            if(qAdminBox) qAdminBox.style.display = 'none';
+            if(bulkAdminBox) bulkAdminBox.style.display = 'none';
+            if(nAdminBox) nAdminBox.style.display = 'none';
+            if(mainFolderBox) mainFolderBox.style.display = 'none';
+            if(mainNoteFolderBox) mainNoteFolderBox.style.display = 'none';
+            if(subFolderBox) subFolderBox.style.display = 'none';
+        }
+    }
+
+    function refreshCurrentView() {
+        if(currentActiveTab === 'qb-section') renderQuestionBankFolders();
+        if(currentActiveTab === 'notes-section') renderNoteFolders();
+    }
+
+    function createFolder() {
+        if(!window.isMainAdmin) { alert("⚠️ নতুন মূল ফোল্ডার তৈরির অনুমতি কেবল মেইন এডমিনের আছে!"); return; }
+        let folderName = document.getElementById('newFolderName').value.trim();
+        if(!folderName) { alert("⚠️ বিষয়ের নাম দিন!"); return; }
+        if(folders.includes(folderName)) { alert("⚠️ ইতিমধ্যে রয়েছে!"); return; }
+        folders.push(folderName);
+        questionBank[folderName] = { "সাধারণ প্রশ্ন": [] };
+        saveData();
+        document.getElementById('newFolderName').value = '';
+        alert("✅ নতুন বিষয় ফোল্ডার তৈরি হয়েছে!");
+        renderQuestionBankFolders();
+    }
+
+    function editFolder(oldName, event) {
+        event.stopPropagation();
+        if(!window.isMainAdmin) { alert("❌ ফোল্ডার এডিট করার অনুমতি কেবল মেইন এডমিনের আছে!"); return; }
+        let newName = prompt("ফোল্ডারের নতুন নাম দিন:", oldName);
+        if(!newName || newName.trim() === "" || newName === oldName) return;
+        newName = newName.trim();
+        if(folders.includes(newName)) { alert("⚠️ এই নামের ফোল্ডার ইতিমধ্যে রয়েছে!"); return; }
+
+        let index = folders.indexOf(oldName);
+        if(index !== -1) {
+            folders[index] = newName;
+            questionBank[newName] = questionBank[oldName];
+            delete questionBank[oldName];
+            saveData();
+            renderQuestionBankFolders();
+            alert("✅ ফোল্ডারের নাম পরিবর্তন করা হয়েছে!");
+        }
+    }
+
+    function deleteQuestionFolder(folderName, event) {
+        event.stopPropagation();
+        if(!window.isMainAdmin) { alert("❌ ফোল্ডার ডিলিট করার অনুমতি কেবল মেইন এডমিনের আছে!"); return; }
+        if(confirm("⚠️ কি নিশ্চিত আপনি '" + folderName + "' ফোল্ডারটি এবং এর সব প্রশ্ন ডিলিট করতে চান?")) {
+            folders = folders.filter(f => f !== folderName);
+            delete questionBank[folderName];
+            saveData();
+            renderQuestionBankFolders();
+            loadProportionalRandomQuestion();
+            alert("✅ ফোল্ডারটি ডিলিট করা হয়েছে!");
+        }
+    }
+
+    function editSubCategoryFolder(folderName, oldCat, event) {
+        event.stopPropagation();
+        let newCat = prompt("ক্যাটাগরির নতুন নাম দিন:", oldCat);
+        if(!newCat || newCat.trim() === "" || newCat === oldCat) return;
+        newCat = newCat.trim();
+        if(questionBank[folderName][newCat]) { alert("⚠️ এই ক্যাটাগরি ইতিমধ্যে রয়েছে!"); return; }
+
+        questionBank[folderName][newCat] = questionBank[folderName][oldCat];
+        delete questionBank[folderName][oldCat];
+        saveData();
+        openMainFolder(folderName);
+        alert("✅ ক্যাটাগরির নাম পরিবর্তন করা হয়েছে!");
+    }
+
+    function deleteSubCategoryFolder(folderName, category, event) {
+        event.stopPropagation();
+        if(!window.isMainAdmin) { alert("❌ ক্যাটাগরি ডিলিট করার অনুমতি কেবল মেইন এডমিনের আছে!"); return; }
+        if(confirm("⚠️ কি নিশ্চিত আপনি '" + category + "' ক্যাটাগরি এবং এর প্রশ্নগুলো ডিলিট করতে চান?")) {
+            delete questionBank[folderName][category];
+            saveData();
+            openMainFolder(folderName);
+            loadProportionalRandomQuestion();
+            alert("✅ ক্যাটাগরি ডিলিট করা হয়েছে!");
+        }
+    }
+
+    function createSubCategoryFolder() {
+        let subName = document.getElementById('newSubCategoryInput').value.trim();
+        if(!subName) { alert("⚠️ ক্যাটাগরির নাম দিন!"); return; }
+        if(!questionBank[currentMainFolder]) {
+            questionBank[currentMainFolder] = {};
+        }
+        if(questionBank[currentMainFolder][subName]) { alert("⚠️ এই ক্যাটাগরি ইতিমধ্যে রয়েছে!"); return; }
+        
+        questionBank[currentMainFolder][subName] = [];
+        saveData();
+        document.getElementById('newSubCategoryInput').value = '';
+        alert("✅ ক্যাটাগরি বা সাব-ফোল্ডার তৈরি হয়েছে!");
+        openMainFolder(currentMainFolder);
+    }
+
+    function createNoteFolder() {
+        if(!window.isMainAdmin) { alert("⚠️ নতুন নোট ফোল্ডার তৈরির অনুমতি কেবল মেইন এডমিনের আছে!"); return; }
+        let folderName = document.getElementById('newNoteFolderName').value.trim();
+        if(!folderName) { alert("⚠️ নোট ফোল্ডারের নাম দিন!"); return; }
+        if(noteFolders.includes(folderName)) { alert("⚠️ ইতিমধ্যে রয়েছে!"); return; }
+        noteFolders.push(folderName);
+        noteBank[folderName] = [];
+        saveData();
+        document.getElementById('newNoteFolderName').value = '';
+        alert("✅ নোট ফোল্ডার তৈরি হয়েছে!");
+        renderNoteFolders();
+    }
+
+    function editNoteFolder(oldName, event) {
+        event.stopPropagation();
+        if(!window.isMainAdmin) { alert("❌ নোট ফোল্ডার এডিট করার অনুমতি কেবল মেইন এডমিনের আছে!"); return; }
+        let newName = prompt("নোট ফোল্ডারের নতুন নাম দিন:", oldName);
+        if(!newName || newName.trim() === "" || newName === oldName) return;
+        newName = newName.trim();
+        if(noteFolders.includes(newName)) { alert("⚠️ এই নামের নোট ফোল্ডার ইতিমধ্যে রয়েছে!"); return; }
+
+        let index = noteFolders.indexOf(oldName);
+        if(index !== -1) {
+            noteFolders[index] = newName;
+            noteBank[newName] = noteBank[oldName];
+            delete noteBank[oldName];
+            saveData();
+            renderNoteFolders();
+            alert("✅ নোট ফোল্ডারের নাম পরিবর্তন করা হয়েছে!");
+        }
+    }
+
+    function deleteNoteFolder(folderName, event) {
+        event.stopPropagation();
+        if(!window.isMainAdmin) { alert("❌ নোট ফোল্ডার ডিলিট করার অনুমতি কেবল মেইন এডমিনের আছে!"); return; }
+        if(confirm("⚠️ কি নিশ্চিত আপনি '" + folderName + "' নোট ফোল্ডারটি ডিলিট করতে চান?")) {
+            noteFolders = noteFolders.filter(f => f !== folderName);
+            delete noteBank[folderName];
+            saveData();
+            renderNoteFolders();
+            alert("✅ ফোল্ডারটি ডিলিট করা হয়েছে!");
+        }
+    }
+
+    function deleteSingleQuestion(folderName, category, qIndex) {
+        if(!window.isMainAdmin) { alert("⚠️ আপনার প্রশ্ন ডিলিট করার অনুমতি নেই!"); return; }
+        if(confirm("⚠️ এই প্রশ্নটি ডিলিট করতে চান?")) {
+            questionBank[folderName][category].splice(qIndex, 1);
+            saveData();
+            openSubCategory(folderName, category);
+            loadProportionalRandomQuestion();
+        }
+    }
+
+    function deleteSingleNote(folderName, nIndex) {
+        if(!window.isMainAdmin) { alert("⚠️ আপনার নোট ডিলিট করার অনুমতি নেই!"); return; }
+        if(confirm("⚠️ এই নোটটি ডিলিট করতে চান?")) {
+            noteBank[folderName].splice(nIndex, 1);
+            saveData();
+            openNoteFolder(folderName);
+        }
+    }
+
+    function saveData() {
+        localStorage.setItem('agri_folders', JSON.stringify(folders));
+        localStorage.setItem('agri_questions', JSON.stringify(questionBank));
+        localStorage.setItem('agri_note_folders', JSON.stringify(noteFolders));
+        localStorage.setItem('agri_notes', JSON.stringify(noteBank));
+    }
+
+    function addNewQuestion() {
+        let q = document.getElementById('newQ').value;
+        let optA = document.getElementById('optA').value;
+        let optB = document.getElementById('optB').value;
+        let optC = document.getElementById('optC').value;
+        let optD = document.getElementById('optD').value;
+        let correctIdx = parseInt(document.getElementById('correctOpt').value);
+
+        if(!q || !optA || !optB || !optC || !optD) {
+            alert("⚠️ সব ঘর পূরণ করুন!");
+            return;
+        }
+
+        if(!questionBank[currentMainFolder][currentSubCategory]) {
+            questionBank[currentMainFolder][currentSubCategory] = [];
+        }
+
+        let newObj = {
+            question: q,
+            addedBy: window.currentAdminName || "অজানা এডমিন", // লেখকের নাম ট্র্যাক করা হচ্ছে
+            options: [
+                { text: "A) " + optA, isCorrect: correctIdx === 0 },
+                { text: "B) " + optB, isCorrect: correctIdx === 1 },
+                { text: "C) " + optC, isCorrect: correctIdx === 2 },
+                { text: "D) " + optD, isCorrect: correctIdx === 3 }
+            ]
+        };
+
+        questionBank[currentMainFolder][currentSubCategory].push(newObj);
+        saveData();
+
+        alert("✅ সফলভাবে প্রশ্ন যুক্ত হয়েছে!");
+        document.getElementById('newQ').value = '';
+        document.getElementById('optA').value = '';
+        document.getElementById('optB').value = '';
+        document.getElementById('optC').value = '';
+        document.getElementById('optD').value = '';
+        openSubCategory(currentMainFolder, currentSubCategory);
+        loadProportionalRandomQuestion();
+    }
+
+    function bulkImportQuestions() {
+        let rawData = document.getElementById('bulkDataBox').value;
+        if(!rawData.trim()) { alert("⚠️ ডাটা পেস্ট করুন!"); return; }
+
+        try {
+            let parsedQuestions = eval("[" + rawData + "]");
+            // Bulk প্রশ্নের সাথে বর্তমান এডমিনের নাম যুক্ত করে দেওয়া
+            parsedQuestions.forEach(item => {
+                if(!item.addedBy) item.addedBy = window.currentAdminName || "অজানা এডমিন";
+            });
+
+            if(!questionBank[currentMainFolder][currentSubCategory]) {
+                questionBank[currentMainFolder][currentSubCategory] = [];
+            }
+            questionBank[currentMainFolder][currentSubCategory] = questionBank[currentMainFolder][currentSubCategory].concat(parsedQuestions);
+            saveData();
+            alert("✅ সফলভাবে " + parsedQuestions.length + " টি প্রশ্ন যুক্ত করা হয়েছে!");
+            document.getElementById('bulkDataBox').value = '';
+            openSubCategory(currentMainFolder, currentSubCategory);
+            loadProportionalRandomQuestion();
+        } catch (err) {
+            alert("❌ ফরম্যাট সঠিক নয়!");
+        }
+    }
+
+    function addNewNote() {
+        let title = document.getElementById('noteTitle').value.trim();
+        let link = document.getElementById('noteLink').value.trim() || "#";
+        let content = document.getElementById('noteContent').value.trim();
+
+        if(!title || !content) { 
+            alert("⚠️ শিরোনাম এবং নোটের মূল বিবরণ অবশ্যই দিতে হবে!"); 
+            return; 
+        }
+
+        if(!noteBank[currentOpenFolder]) noteBank[currentOpenFolder] = [];
+        noteBank[currentOpenFolder].push({ title: title, link: link, content: content });
+        saveData();
+
+        alert("✅ নতুন নোট সফলভাবে প্রকাশিত হয়েছে!");
+        document.getElementById('noteTitle').value = '';
+        document.getElementById('noteLink').value = '';
+        document.getElementById('noteContent').value = '';
+        openNoteFolder(currentOpenFolder);
+    }
+
+    function renderNoteFolders() {
+        document.getElementById('noteFolderContainer').style.display = 'block';
+        document.getElementById('noteItemListContainer').style.display = 'none';
+        document.getElementById('noteReaderView').style.display = 'none';
+
+        updateInlineAdminVisibility();
+
+        let container = document.getElementById('noteFolderContainer');
+        container.innerHTML = "";
+
+        noteFolders.forEach(folder => {
+            let nCnt = noteBank[folder] ? noteBank[folder].length : 0;
+            let card = document.createElement('div');
+            card.className = 'folder-card';
+            
+            let adminButtons = window.isMainAdmin ? `
+                <div style="display:flex; gap:5px;">
+                    <button class="btn-edit" onclick="editNoteFolder('${folder}', event)">এডিট</button>
+                    <button class="btn-delete" onclick="deleteNoteFolder('${folder}', event)">ডিলিট</button>
+                </div>` : '';
+
+            card.innerHTML = `
+                <span class="folder-title">📁 ${folder}</span> 
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="background: #e3f2fd; padding: 4px 10px; border-radius: 12px; font-size: 13px; color: #0d47a1;">${nCnt} টি নোট</span>
+                    ${adminButtons}
+                </div>`;
+            card.onclick = () => openNoteFolder(folder);
+            container.appendChild(card);
+        });
+    }
+
+    function openNoteFolder(folderName) {
+        currentOpenFolder = folderName;
+        document.getElementById('noteFolderContainer').style.display = 'none';
+        document.getElementById('noteItemListContainer').style.display = 'block';
+        document.getElementById('noteReaderView').style.display = 'none';
+        document.getElementById('activeNoteFolderName').innerText = "📂 ফোল্ডার: " + folderName;
+
+        updateInlineAdminVisibility();
+
+        let container = document.getElementById('noteCardsContainer');
+        container.innerHTML = "";
+
+        let notes = noteBank[folderName] || [];
+        if(notes.length === 0) {
+            container.innerHTML = "<p style='color:#666;'>এই ফোল্ডারে কোনো নোট নেই।</p>";
+            return;
+        }
+
+        notes.forEach((note, idx) => {
+            let item = document.createElement('div');
+            item.className = 'item-card';
+            
+            let deleteBtnHtml = window.isMainAdmin ? `<button class="btn-delete" style="display:inline-block;" onclick="deleteSingleNote('${folderName}', ${idx})">ডিলিট</button>` : '';
+
+            item.innerHTML = `
+                <h4>${note.title}</h4> 
+                <div class="btn-group">
+                    <button class="btn-read" onclick="readNote('${folderName}', ${idx})">📖 পড়ুন</button>
+                    ${deleteBtnHtml}
+                </div>`;
+            container.appendChild(item);
+        });
+    }
+
+    function readNote(folderName, idx) {
+        let note = noteBank[folderName][idx];
+        document.getElementById('noteFolderContainer').style.display = 'none';
+        document.getElementById('noteItemListContainer').style.display = 'none';
+        document.getElementById('noteReaderView').style.display = 'block';
+
+        document.getElementById('readerNoteTitle').innerText = note.title;
+        document.getElementById('readerNoteContent').innerText = note.content;
+
+        let downloadArea = document.getElementById('readerDownloadBtnArea');
+        downloadArea.innerHTML = "";
+        if(note.link && note.link !== "#") {
+            downloadArea.innerHTML = `<a href="${note.link}" class="btn-download" target="_blank">📥 পিডিএফ ডাউনলোড / ড্রাইভ লিংক</a>`;
+        }
+    }
+
+    function backToNoteList() { openNoteFolder(currentOpenFolder); }
+    function backToNoteFolders() { renderNoteFolders(); }
+
+    function renderQuestionBankFolders() {
+        document.getElementById('qbFolderContainer').style.display = 'block';
+        document.getElementById('qbSubFolderContainer').style.display = 'none';
+        document.getElementById('qbQuestionList').style.display = 'none';
+
+        updateInlineAdminVisibility();
+
+        let container = document.getElementById('qbFolderContainer');
+        container.innerHTML = "";
+
+        folders.forEach(folder => {
+            let qCount = 0;
+            let catObj = questionBank[folder] || {};
+            for(let cat in catObj) qCount += catObj[cat].length;
+
+            let card = document.createElement('div');
+            card.className = 'folder-card';
+
+            let adminButtons = window.isMainAdmin ? `
+                <div style="display:flex; gap:5px;">
+                    <button class="btn-edit" onclick="editFolder('${folder}', event)">এডিট</button>
+                    <button class="btn-delete" onclick="deleteQuestionFolder('${folder}', event)">ডিলিট</button>
+                </div>` : '';
+
+            card.innerHTML = `
+                <span class="folder-title">📁 ${folder}</span> 
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="background: #e8f5e9; padding: 4px 10px; border-radius: 12px; font-size: 13px; color: #1b5e20;">${qCount} টি প্রশ্ন</span>
+                    ${adminButtons}
+                </div>`;
+            card.onclick = () => openMainFolder(folder);
+            container.appendChild(card);
+        });
+    }
+
+    function openMainFolder(folderName) {
+        currentMainFolder = folderName;
+        document.getElementById('qbFolderContainer').style.display = 'none';
+        document.getElementById('qbSubFolderContainer').style.display = 'block';
+        document.getElementById('qbQuestionList').style.display = 'none';
+        document.getElementById('activeMainFolderName').innerText = "📂 বিষয়: " + folderName;
+
+        updateInlineAdminVisibility();
+
+        let container = document.getElementById('subCategoryCardsContainer');
+        container.innerHTML = "";
+
+        let catObj = questionBank[folderName] || { "সাধারণ প্রশ্ন": [] };
+        
+        for(let category in catObj) {
+            let count = catObj[category].length;
+            let card = document.createElement('div');
+            card.className = 'folder-card';
+            
+            let adminButtons = window.isMainAdmin ? `
+                <div style="display:flex; gap:5px;">
+                    <button class="btn-edit" onclick="editSubCategoryFolder('${folderName}', '${category}', event)">এডিট</button>
+                    <button class="btn-delete" onclick="deleteSubCategoryFolder('${folderName}', '${category}', event)">ডিলিট</button>
+                </div>` : '';
+
+            card.innerHTML = `
+                <span class="folder-title">📌 ${category}</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="background: #e1f5fe; padding: 4px 10px; border-radius: 12px; font-size: 13px; color: #01579b;">${count} টি প্রশ্ন</span>
+                    ${adminButtons}
+                </div>`;
+            card.onclick = () => openSubCategory(folderName, category);
+            container.appendChild(card);
+        }
+    }
+
+    function openSubCategory(folderName, category) {
+        currentSubCategory = category;
+        document.getElementById('qbFolderContainer').style.display = 'none';
+        document.getElementById('qbSubFolderContainer').style.display = 'none';
+        document.getElementById('qbQuestionList').style.display = 'block';
+        document.getElementById('activeSubFolderName').innerText = `📂 বিষয়: ${folderName} > ${category}`;
+
+        updateInlineAdminVisibility();
+
+        let qContainer = document.getElementById('qbQuestionsContainer');
+        qContainer.innerHTML = "";
+
+        let questions = (questionBank[folderName] && questionBank[folderName][category]) ? questionBank[folderName][category] : [];
+        if(questions.length === 0) {
+            qContainer.innerHTML = "<p style='color:#666;'>এই ক্যাটাগরিতে কোনো প্রশ্ন নেই।</p>";
+            return;
+        }
+
+        questions.forEach((q, idx) => {
+            let item = document.createElement('div');
+            item.className = 'item-card';
+            let optionsText = q.options.map(o => `<br><small>${o.text} ${o.isCorrect ? '✅ (সঠিক)' : ''}</small>`).join('');
+            
+            // লেখকের নাম দেখার ট্যাগ (যেহেতু এডমিন লগইন করা থাকলে দেখা যাবে)
+            let authorBadge = q.addedBy ? `<br><small style="color: #d32f2f; font-weight: bold;">✍️ যুক্ত করেছেন: ${q.addedBy}</small>` : '';
+            
+            let deleteBtnHtml = window.isMainAdmin ? `<button class="btn-delete" style="display:inline-block; margin-top:5px;" onclick="deleteSingleQuestion('${folderName}', '${category}', ${idx})">প্রশ্ন ডিলিট</button>` : '';
+
+            item.innerHTML = `<div><strong>${idx + 1}. ${q.question}</strong>${optionsText}${authorBadge}<br>${deleteBtnHtml}</div>`;
+            qContainer.appendChild(item);
+        });
+    }
+
+    function backToMainFolders() { renderQuestionBankFolders(); }
+    function backToSubFolders() { openMainFolder(currentMainFolder); }
+
+    function loadProportionalRandomQuestion() {
+        if(quizTimer) clearInterval(quizTimer);
+        document.getElementById('quiz-result').innerHTML = '';
+        document.getElementById('next-btn').style.display = 'none';
+
+        let weightedPool = [];
+        folders.forEach((folder, idx) => {
+            let catObj = questionBank[folder] || {};
+            let totalFolderQ = 0;
+            for(let cat in catObj) totalFolderQ += catObj[cat].length;
+
+            if(totalFolderQ > 0) {
+                let weight = (idx === 0) ? 4 : 2; 
+                for(let w = 0; w < weight; w++) weightedPool.push(folder);
+            }
+        });
+
+        if(weightedPool.length === 0) {
+            document.getElementById('quiz-question').innerText = "কোনো প্রশ্ন নেই। প্রশ্নব্যাংকের ফোল্ডারে গিয়ে প্রশ্ন যোগ করুন।";
+            document.getElementById('quiz-options').innerHTML = "";
+            document.querySelector('.timer-box').style.display = 'none';
+            return;
+        }
+
+        let selectedFolder = weightedPool[Math.floor(Math.random() * weightedPool.length)];
+        let allFolderQuestions = [];
+        let catObj = questionBank[selectedFolder] || {};
+        for(let cat in catObj) allFolderQuestions = allFolderQuestions.concat(catObj[cat]);
+
+        if(allFolderQuestions.length === 0) return;
+
+        let currentQuestion = allFolderQuestions[Math.floor(Math.random() * allFolderQuestions.length)];
+        document.getElementById('quiz-question').innerHTML = `<small style="color:#0277bd;">[বিষয়: ${selectedFolder}]</small><br>` + currentQuestion.question;
+
+        let optContainer = document.getElementById('quiz-options');
+        optContainer.innerHTML = '';
+
+        currentQuestion.options.forEach(opt => {
+            let btn = document.createElement('button');
+            btn.innerText = opt.text;
+            btn.onclick = () => selectOption(btn, opt.isCorrect, currentQuestion);
+            optContainer.appendChild(btn);
+        });
+
+        timeLeft = 30;
+        document.getElementById('time-left').innerText = timeLeft;
+        document.querySelector('.timer-box').style.display = 'block';
+
+        quizTimer = setInterval(() => {
+            timeLeft--;
+            document.getElementById('time-left').innerText = timeLeft;
+            if(timeLeft <= 0) {
+                clearInterval(quizTimer);
+                timeOutQuiz(currentQuestion);
+            }
+        }, 1000);
+    }
+
+    function selectOption(selectedBtn, isCorrect, currentQuestion) {
+        if(quizTimer) clearInterval(quizTimer);
+        document.querySelectorAll('.options button').forEach(b => b.disabled = true);
+        let res = document.getElementById('quiz-result');
+        if (isCorrect) {
+            selectedBtn.style.backgroundColor = "#81c784";
+            selectedBtn.style.color = "#fff";
+            res.style.color = "green";
+            res.innerHTML = "✅ সঠিক উত্তর!";
+        } else {
+            selectedBtn.style.backgroundColor = "#e57373";
+            selectedBtn.style.color = "#fff";
+            res.style.color = "red";
+            let correctOpt = currentQuestion.options.find(o => o.isCorrect);
+            res.innerHTML = "❌ ভুল উত্তর! সঠিক উত্তর: " + (correctOpt ? correctOpt.text : '');
+        }
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    function timeOutQuiz(currentQuestion) {
+        document.querySelectorAll('.options button').forEach(b => b.disabled = true);
+        let res = document.getElementById('quiz-result');
+        res.style.color = "#c62828";
+        let correctOpt = currentQuestion.options.find(o => o.isCorrect);
+        res.innerHTML = "⏰ সময় শেষ! সঠিক উত্তর: " + (correctOpt ? correctOpt.text : '');
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    function exportBackup() {
+        if(!window.isMainAdmin) { alert("❌ ব্যাকআপ ডাউনলোড করার অনুমতি কেবল মেইন এডমিনের আছে!"); return; }
+        let backupData = { folders, questionBank, noteFolders, noteBank, siteNotice, noticeMode };
+        let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+        let downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "agri_full_backup.json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        alert("✅ ব্যাকআপ ডাউনলোড হয়েছে!");
+    }
+
+    function importBackup(event) {
+        if(!window.isMainAdmin) { alert("❌ ব্যাকআপ রিস্টোর করার অনুমতি কেবল মেইন এডমিনের আছে!"); return; }
+        let file = event.target.files[0];
+        if (!file) return;
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                let imported = JSON.parse(e.target.result);
+                if (imported.questionBank && imported.noteBank) {
+                    folders = imported.folders || folders;
+                    questionBank = imported.questionBank;
+                    noteFolders = imported.noteFolders || noteFolders;
+                    noteBank = imported.noteBank;
+                    siteNotice = imported.siteNotice || siteNotice;
+                    noticeMode = imported.noticeMode || noticeMode;
+                    saveData();
+                    localStorage.setItem('agri_notice', siteNotice);
+                    localStorage.setItem('agri_notice_mode', noticeMode);
+                    renderNoticeBar();
+                    alert("✅ ব্যাকআপ রিস্টোর হয়েছে!");
+                    loadProportionalRandomQuestion();
+                } else { alert("❌ ফরম্যাট সঠিক নয়!"); }
+            } catch (err) { alert("❌ ফাইল পড়তে সমস্যা হয়েছে!"); }
+        };
+        reader.readAsText(file);
+    }
+
+    function createSubAdmin() {
+        if(!window.isMainAdmin) return;
+        let name = document.getElementById('subAdminName').value;
+        let pin = document.getElementById('subAdminPin').value;
+        if(!name || !pin) return;
+        subAdmins.push({ name, pin });
+        localStorage.setItem('agri_sub_admins', JSON.stringify(subAdmins));
+        alert("✅ সাব-এডমিন তৈরি হয়েছে!");
+        document.getElementById('subAdminName').value = '';
+        document.getElementById('subAdminPin').value = '';
+        renderSubAdminList();
+    }
+
+    function deleteSubAdmin(index) {
+        if(!window.isMainAdmin) return;
+        subAdmins.splice(index, 1);
+        localStorage.setItem('agri_sub_admins', JSON.stringify(subAdmins));
+        renderSubAdminList();
+        alert("✅ রিমুভ করা হয়েছে!");
+    }
+
+    function renderSubAdminList() {
+        let listDiv = document.getElementById('subAdminList');
+        if(subAdmins.length === 0) { listDiv.innerHTML = "<small>কোনো সাব-এডমিন নেই।</small>"; return; }
+        listDiv.innerHTML = "";
+        subAdmins.forEach((adm, idx) => {
+            let item = document.createElement('div');
+            item.className = 'sub-admin-item';
+            item.innerHTML = `<span>👤 <b>${adm.name}</b></span> <button class="del-admin-btn" onclick="deleteSubAdmin(${idx})">রিমুভ</button>`;
+            listDiv.appendChild(item);
+        });
+    }
+
+    function openTab(evt, sectionId) {
+        currentActiveTab = sectionId;
+        document.querySelectorAll('.content-box').forEach(c => c.style.display = 'none');
+        document.querySelectorAll('.menu-card').forEach(m => m.classList.remove('active'));
+        document.getElementById(sectionId).style.display = 'block';
+        evt.currentTarget.classList.add('active');
+
+        if(sectionId === 'quiz-section') loadProportionalRandomQuestion();
+        if(sectionId === 'qb-section') renderQuestionBankFolders();
+        if(sectionId === 'notes-section') renderNoteFolders();
+    }
+</script>
+
+</body>
+</html>
