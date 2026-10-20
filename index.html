@@ -822,7 +822,6 @@
         if(!rawData) { alert("⚠️ ডাটা দিন!"); return; }
 
         try {
-            // মোবাইলের স্মার্ট কোট ও সাধারণ কোট পরিষ্কার করার লজিক
             let cleanData = rawData.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
             if(!cleanData.startsWith("[")) cleanData = "[" + cleanData;
             if(!cleanData.endsWith("]")) cleanData = cleanData + "]";
@@ -1395,7 +1394,7 @@
         if(!listDiv) return;
         if(subAdmins.length === 0) { listDiv.innerHTML = "<small>কেউ নেই।</small>"; return; }
         listDiv.innerHTML = "";
-        subAdans = subAdmins || [];
+        subAdmins = subAdmins || [];
         subAdmins.forEach((adm, idx) => {
             let item = document.createElement('div');
             item.className = 'sub-admin-item';
