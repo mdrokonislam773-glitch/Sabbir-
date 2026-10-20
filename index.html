@@ -319,6 +319,184 @@
     };
 
     function initCloudSync() {
+   subAdminPin" placeholder="পিন">
+            <button onclick="createSubAdmin()" style="background: #1b5e20;">➕ নতুন পিন তৈরি করুন</button>
+            <div id="subAdminList" style="margin-top: 5px;">কোনো সাব-এডমিন নেই।</div>
+        </div>
+
+        <button onclick="closeAdminPanel()" style="background: #666; margin-top: 15px;">✖️ বন্ধ করুন</button>
+    </div>
+
+    <!-- ⏱️ আনলিমিটেড পরীক্ষা সেকশন -->
+    <div id="quiz-section" class="content-box" style="display: block;">
+        <div class="quiz-header">
+            <span id="quiz-progress-title">⏱️ মডেল টেস্ট (প্রশ্ন ১/৪০)</span>
+            <div class="timer-box">পরীক্ষার সময় বাকি: <span id="time-left">900</span> সেকেন্ড</div>
+        </div>
+        <div class="question" id="quiz-question">প্রশ্ন লোড হচ্ছে...</div>
+        <div class="options" id="quiz-options"></div>
+        <div class="result" id="quiz-result"></div>
+        <button class="next-btn" id="next-btn" onclick="nextQuizQuestion()">পরবর্তী প্রশ্ন ➔</button>
+    </div>
+
+    <!-- 📥 পিডিএফ ও অনলাইন নোটস সেকশন -->
+    <div id="notes-section" class="content-box">
+        <h3 style="margin-top:0; color:#2e7d32;">📥 শিক্ষণীয় নোটস ও পিডিএফ</h3>
+        
+        <div id="mainNoteFolderCreateBox" style="margin-bottom: 15px; display:none;">
+            <input type="text" id="newNoteFolderName" placeholder="নতুন ফোল্ডারের নাম..." style="width: 70%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+            <button onclick="createNoteFolder()" style="width: 28%; padding: 8px; background: #0d47a1; color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">➕ তৈরি</button>
+        </div>
+
+        <div id="noteFolderContainer"></div>
+        
+        <div id="noteItemListContainer" style="display: none;">
+            <button onclick="backToNoteFolders()" style="background: #666; width: auto; padding: 6px 12px; margin-bottom: 10px; font-size: 13px;">⬅️ ফিরে যান</button>
+            <h4 id="activeNoteFolderName" style="color: #0d47a1; margin-top: 5px;"></h4>
+            
+            <div id="noteAdminBox" class="inline-admin-box">
+                <h4 style="margin: 0 0 8px 0; color: #0d47a1;">➕ নতুন নোট যোগ করুন</h4>
+                <input type="text" id="noteTitle" placeholder="শিরোনাম" style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px;">
+                <input type="text" id="noteLink" placeholder="ড্রাইভ বা ডাউনলোড লিংক (ঐচ্ছিক)" style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px;">
+                <textarea id="noteContent" rows="4" placeholder="নোটের বিবরণ..." style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px;"></textarea>
+                <button onclick="addNewNote()" style="background: #0d47a1; color:#fff; border:none; padding:8px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">প্রকাশ করুন</button>
+            </div>
+
+            <div id="noteCardsContainer"></div>
+        </div>
+
+        <div id="noteReaderView" style="display: none;">
+            <button onclick="backToNoteList()" style="background: #666; width: auto; padding: 6px 12px; margin-bottom: 10px; font-size: 13px;">⬅️ ফিরে যান</button>
+            <h3 id="readerNoteTitle" style="color: #0d47a1; margin-top: 5px;"></h3>
+            <div id="readerDownloadBtnArea" style="margin-bottom: 10px;"></div>
+            <div id="readerNoteContent" class="note-reader-box"></div>
+        </div>
+    </div>
+
+    <!-- 📚 প্রশ্নব্যাংক সেকশন -->
+    <div id="qb-section" class="content-box">
+        <h3 style="margin-top:0; color:#2e7d32;">📚 প্রশ্নব্যাংক (বিষয়ভিত্তিক)</h3>
+        
+        <div id="mainFolderCreateBox" style="margin-bottom: 15px; display:none;">
+            <input type="text" id="newFolderName" placeholder="নতুন বিষয়ের নাম..." style="width: 70%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+            <button onclick="createFolder()" style="width: 28%; padding: 8px; background: #1b5e20; color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">➕ তৈরি</button>
+        </div>
+
+        <div id="qbFolderContainer"></div>
+        
+        <div id="qbSubFolderContainer" style="display: none;">
+            <button onclick="backToMainFolders()" style="background: #666; width: auto; padding: 6px 12px; margin-bottom: 10px; font-size: 13px;">⬅️ ফিরে যান</button>
+            <h4 id="activeMainFolderName" style="color: #1b5e20; margin-top: 5px;"></h4>
+            
+            <div id="subFolderCreateBox" style="margin-bottom: 15px; background: #e8f5e9; padding: 10px; border-radius: 6px; display:none;">
+                <input type="text" id="newSubCategoryInput" placeholder="ক্যাটাগরির নাম..." style="width: 70%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <button onclick="createSubCategoryFolder()" style="width: 28%; padding: 8px; background: #2e7d32; color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">➕ তৈরি</button>
+            </div>
+
+            <div id="subCategoryCardsContainer"></div>
+        </div>
+
+        <div id="qbQuestionList" style="display: none;">
+            <button onclick="backToSubFolders()" style="background: #666; width: auto; padding: 6px 12px; margin-bottom: 10px; font-size: 13px;">⬅️ ফিরে যান</button>
+            <h4 id="activeSubFolderName" style="color: #1b5e20; margin-top: 5px;"></h4>
+
+            <!-- A, B, C, D অপশন দিয়ে প্রশ্ন যোগ করার ফর্ম -->
+            <div id="questionAdminBox" class="inline-admin-box">
+                <h4 style="margin: 0 0 8px 0; color: #1b5e20;">➕ নতুন প্রশ্ন যোগ করুন</h4>
+                <input type="text" id="newQ" placeholder="প্রশ্ন..." style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px;">
+                <input type="text" id="optA" placeholder="অপশন A" style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px;">
+                <input type="text" id="optB" placeholder="অপশন B" style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px;">
+                <input type="text" id="optC" placeholder="অপশন C" style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px;">
+                <input type="text" id="optD" placeholder="অপশন D" style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px;">
+                <select id="correctOpt" style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px;">
+                    <option value="0">সঠিক উত্তর: A</option>
+                    <option value="1">সঠিক উত্তর: B</option>
+                    <option value="2">সঠিক উত্তর: C</option>
+                    <option value="3">সঠিক উত্তর: D</option>
+                </select>
+                <button onclick="addNewQuestion()" style="background: #1b5e20; color:#fff; border:none; padding:8px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">যুক্ত করুন</button>
+            </div>
+
+            <!-- Bulk Import বক্স -->
+            <div id="bulkAdminBox" class="inline-admin-box" style="background: #e3f2fd; border-color: #0d47a1;">
+                <h4 style="margin: 0 0 8px 0; color: #0d47a1;">📥 Bulk Import</h4>
+                <textarea id="bulkDataBox" rows="6" placeholder="{ question: '...', options: [{text: '...', isCorrect: true}, ...] }, ..." style="width:100%; padding:8px; margin-bottom:6px; border:1px solid #ccc; border-radius:4px; font-family: monospace;"></textarea>
+                <button onclick="bulkImportQuestions()" style="background: #0d47a1; color:#fff; border:none; padding:8px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">একাধিক প্রশ্ন যুক্ত করুন</button>
+            </div>
+
+            <div id="qbQuestionsContainer"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('keydown', function (e) {
+        if (!window.isAdminLoggedIn) {
+            if (e.key === 'PrintScreen' || 
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) || 
+                (e.ctrlKey && e.key === 'u')) {
+                alert("⚠️ এই ওয়েবসাইটের কন্টেন্ট সুরক্ষিত। স্ক্রিনশট বা কপি করা নিষেধ!");
+                e.preventDefault();
+                return false;
+            }
+        }
+    });
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAmdRSQHE3pWLyUtqt2h_xcNoJhwCRKHic",
+      authDomain: "miraz-dev.firebaseapp.com",
+      projectId: "miraz-dev",
+      storageBucket: "miraz-dev.firebasestorage.app",
+      messagingSenderId: "1008513938941",
+      appId: "1:1008513938941:web:347dcea8a5097a16a2d594",
+      measurementId: "G-02D31DWK06"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    let defaultFolders = [
+        "১. সংশ্লিষ্ট কৃষি বিষয় (টেকনিক্যাল)",
+        "২. বাংলা",
+        "৩. ইংরেজি",
+        "৪. সাধারণ জ্ঞান ও বিজ্ঞান-প্রযুক্তি"
+    ];
+
+    let folders = defaultFolders;
+    let siteNotice = "📢 স্বাগতম SAAO ও কৃষি চাকরি কর্নার এ! নিয়মিত মডেল টেস্ট ও নোটস পড়ুন।";
+    let noticeMode = "scroll";
+    
+    let questionBank = {};
+    let noteFolders = [
+        "১. সংশ্লিষ্ট কৃষি বিষয় (নোটস)",
+        "২. বাংলা নোটস",
+        "৩. ইংরেজি নোটস",
+        "৪. সাধারণ জ্ঞান ও বিজ্ঞান-প্রযুক্তি নোটস"
+    ];
+    let noteBank = {};
+
+    let subAdmins = JSON.parse(localStorage.getItem('agri_sub_admins')) || [];
+    let currentActiveTab = 'quiz-section';
+    let currentMainFolder = '';
+    let currentSubCategory = '';
+    let currentOpenFolder = '';
+    
+    let examQuestions = [];
+    let currentExamIndex = 0;
+    let examScore = 0;
+    let examTimer = null;
+    let examTimeLeft = 900;
+
+    window.isAdminLoggedIn = false; 
+    window.isMainAdmin = false; 
+    window.currentAdminName = "Visitor";
+
+    window.onload = function() {
+        initCloudSync();
+    };
+
+    function initCloudSync() {
         db.collection("settings").doc("main_config").onSnapshot((doc) => {
             if (doc.exists) {
                 let data = doc.data();
