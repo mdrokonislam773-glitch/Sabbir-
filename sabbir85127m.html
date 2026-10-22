@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>মেইন এডমিন প্যানেল | SAAO ও কৃষি চাকরি কর্নার</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase App SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <!-- Firebase Firestore SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <!-- Firebase Auth SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+    <style>
+        body { font-family: 'SolaimanLipi', Arial, sans-serif; }
+        .admin-section { background: #fff; border: 2px solid #e0e0e0; padding: 20px; border-radius: 10px; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .admin-section input, .admin-section select, .admin-section textarea { width: 100%; padding: 10px; margin: 6px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
+        .admin-section button { padding: 8px 12px; color: #fff; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .btn-delete { background: #d32f2f !important; }
+        .btn-edit { background: #ff9800 !important; }
+        .folder-row { background: #f9f9f9; border: 1px solid #ddd; padding: 10px; margin-top: 6px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
+        .folder-title { font-weight: bold; color: #1b5e20; cursor: pointer; flex-grow: 1; }
+        .folder-title:hover { text-decoration: underline; }
+        /* Modal Style */
+        .modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-box { background: #fff; padding: 20px; border-radius: 8px; width: 95%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+        .edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        @media(max-width: 640px) { .edit-grid { grid-template-columns: 1fr; } }
+        .stat-card { background: #e8f5e9; border: 1px solid #a5d6a7; padding: 15px; border-radius: 8px; text-align: center; }
+        .stat-num { font-size: 22px; font-weight: bold; color: #1b5e20; margin-top: 5px; }
+        .notice-container { background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 6px; padding: 10px 15px; margin-bottom: 20px; font-weight: bold; color: #1b5e20; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+        /* গোপন ব্যাকআপ সেকশন স্টাইল */
+        .secret-backup-box { display: none; background: #1e293b; color: #f8fafc; border: 2px dashed #475569; padding: 15px; border-radius: 8px; margin-top: 15px; font-size: 13px; }
+        .secret-trigger { text-align: center; margin-top: 25px; color: #94a3b8; font-size: 12px; cursor: pointer; user-select: none; }
+        .secret-trigger:hover { color: #0284c7; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col justify-between" style="display: none;" id="authBody">
+
+    <!-- Header -->
+    <header class="bg-emerald-800 text-white shadow-md p-4 flex justify-between items-center">
+        <h1 class="text-lg font-bold">⚙️ মূল এডমিন প্যানেল</h1>
+        <a href="index.html" class="bg-emerald-600 px-3 py-1 rounded text-sm font-semibold hover:bg-emerald-700 transition">🌐 মূল সাইটে ফিরে যান</a>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-3xl mx-auto p-4 w-full flex-grow">
+        
+        <!-- Login Box -->
+        <div id="login-box" class="bg-white p-6 rounded-xl shadow-md max-w-md mx-auto mt-10">
+            <h2 class="text-xl font-bold text-emerald-800 mb-4 text-center">🔐 মেইন এডমিন লগইন</h2>
+            <form id="admin-login-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">ইমেল এড্রেস</label>
+                    <input type="email" id="admin-email" required placeholder="admin@agrinextgen.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">পাসওয়ার্ড</label>
+                    <input type="password" id="admin-password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="w-full bg-emerald-700 py-2 rounded-lg font-semibold hover:bg-emerald-800 transition text-white">লগইন করুন</button>
+            </form>
+            <p id="login-error" class="text-red-500 text-sm mt-3 text-center"></p>
+        </div>
+
+        <!-- Admin Dashboard -->
+        <div id="admin-dashboard" class="hidden space-y-6 mt-6">
+            <div class="bg-white p-4 rounded-xl shadow-md flex justify-between items-center">
+                <span id="logged-user-email" class="text-sm font-semibold text-emerald-700"></span>
+                <button onclick="adminLogout()" class="bg-red-500 px-3 py-1 rounded text-sm hover:bg-red-600 transition text-white">লগআউট</button>
+            </div>
+
+            <!-- সাব-এডমিন ম্যানেজমেন্ট প্যানেল -->
+            <div class="admin-section" style="border-color: #6366f1;">
+                <h3 style="color: #6366f1; margin-top:0; border-bottom: 2px solid #6366f1; padding-bottom: 5px;">👥 সাব-এডমিন ম্যানেজমেন্ট প্যানেল</h3>
+                <div style="background: #eef2ff; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 6px 0; color: #4338ca;">➕ নতুন সাব-এডমিন যুক্ত করুন</h4>
+                    <input type="text" id="subAdminName" placeholder="সাব-এডমিনের নাম (যেমন: রহিম উদ্দিন)">
+                    <input type="email" id="subAdminEmail" placeholder="সাব-এডমিনের ইমেল (যেমন: subadmin@agrinextgen.com)">
+                    <input type="password" id="subAdminPassword" placeholder="সাব-এডমিনের পাসওয়ার্ড (কমপক্ষে ৬ ডিজিট)">
+                    <button onclick="createNewSubAdmin()" style="background: #6366f1; width:100%; margin-top:5px;">সাব-এডমিন তৈরি করুন</button>
+                </div>
+                <h4 style="margin: 10px 0 6px 0; color: #374155; font-size: 14px;">📋 বর্তমান সাব-এডমিনদের তালিকা:</h4>
+                <div id="subAdminListContainer"></div>
+            </div>
+
+            <!-- নোটিশ ও বিজ্ঞাপন ম্যানেজমেন্ট প্যানেল -->
+            <div class="admin-section" style="border-color: #ff9800;">
+                <h3 style="color: #ff9800; margin-top:0; border-bottom: 2px solid #ff9800; padding-bottom: 5px;">📢 নোটিশ ও বিজ্ঞাপন প্যানেল ম্যানেজার</h3>
+                <div class="notice-container" id="adminNoticePreviewBox">
+                    <div style="overflow:hidden; width:100%;" id="adminNoticeWrapper">
+                        <marquee behavior="scroll" direction="left" scrollamount="5" id="runningNoticeText">📢 স্বাগতম SAAO ও কৃষি চাকরি কর্নার এডমিন প্যানেলে!</marquee>
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size: 13px; font-weight: bold;">বিজ্ঞাপন বা নোটিশের টেক্সট:</label>
+                    <input type="text" id="noticeTextInput" placeholder="এখানে নোটিশ লিখুন...">
+                    
+                    <label style="font-size: 13px; font-weight: bold; margin-top: 8px; display:block;">ডিসপ্লে স্টাইল:</label>
+                    <select id="noticeModeSelect">
+                        <option value="scroll">চলমান (Marquee Scroll)</option>
+                        <option value="static">স্থির (Static Center)</option>
+                    </select>
+                    <button onclick="saveNoticeSettings()" style="background: #ff9800; width: 100%; margin-top: 8px;">নোটিশ আপডেট করুন</button>
+                </div>
+            </div>
+
+            <!-- পরিসংখ্যান, ফায়ারবেস ট্রাফিক ও ডাটাবেজ স্টোরেজ মনিটরিং -->
+            <div class="admin-section" style="border-color: #0277bd;">
+                <h3 style="color: #0277bd; margin-top:0; border-bottom: 2px solid #0277bd; padding-bottom: 5px;">📊 ফায়ারবেস ট্রাফিক, লাইভ ইউজার ও স্টোরেজ মনিটরিং</h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px;">
+                    <div class="stat-card">
+                        <div style="font-size: 12px; font-weight: bold; color: #333;">🟢 বর্তমানে অনলাইনে</div>
+                        <div id="statOnline" class="stat-num">০</div>
+                    </div>
+                    <div class="stat-card" style="background: #e3f2fd; border-color: #90caf9;">
+                        <div style="font-size: 12px; font-weight: bold; color: #333;">📅 আজ ভিজিট করেছে</div>
+                        <div id="statTodayVisit" class="stat-num" style="color: #0d47a1;">০</div>
+                    </div>
+                    <div class="stat-card" style="background: #fff3e0; border-color: #ffe0b2;">
+                        <div style="font-size: 12px; font-weight: bold; color: #333;">📈 মোট ভিজিটর (ফায়ারবেস)</div>
+                        <div id="statTotalVisit" class="stat-num" style="color: #e65100;">০</div>
+                    </div>
+                </div>
+
+                <!-- Firebase Database Storage Quota Box -->
+                <div style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 12px; border-radius: 8px; margin-top: 15px;">
+                    <div style="font-size: 13px; font-weight: bold; color: #334155;">🔥 ফায়ারবেস ফায়ারস্টোর (Firestore) ডাটাবেজ স্টোরেজ কোটা</div>
+                    <div style="font-size: 12px; color: #475569; margin-top: 4px;">
+                        বিনামূল্যে উপলব্ধ কোটা (Spark Plan): <b style="color: #0f172a;">১ GB (1024 MB)</b> | 
+                        ব্যবহৃত হয়েছে: <b id="usedStorageSize" style="color: #0284c7;">গণনা হচ্ছে...</b> | 
+                        বাকি আছে: <b id="remainingStorageSize" style="color: #16a34a;">গণনা হচ্ছে...</b>
+                    </div>
+                    <div style="background: #e2e8f0; border-radius: 4px; height: 8px; width: 100%; margin-top: 6px; overflow: hidden;">
+                        <div id="storageProgressBar" style="background: #0284c7; height: 100%; width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ১. প্রশ্নব্যাংক ম্যানেজার -->
+            <div class="admin-section" style="border-color: #2e7d32;">
+                <h3 style="color: #2e7d32; margin-top:0; border-bottom: 2px solid #2e7d32; padding-bottom: 5px;">📚 ১. প্রশ্নব্যাংক ম্যানেজার</h3>
+                
+                <div style="margin-bottom: 12px;">
+                    <input type="text" id="qbGlobalSearchBox" onkeyup="filterQBGlobal()" placeholder="🔍 প্রশ্ন, তারিখ (YYYY-MM-DD) অথবা এডমিনের নাম দিয়ে সার্চ করুন..." style="border: 2px solid #2e7d32; background: #f1f8e9; font-weight: bold;">
+                </div>
+
+                <div id="qbBreadcrumb" style="font-weight: bold; color: #555; margin-bottom: 10px; font-size: 14px;"></div>
+                <div id="qbBackBtnContainer" style="margin-bottom: 10px;"></div>
+
+                <div id="qbMainFolderCreateBox" style="background: #f1f8e9; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 6px 0; color: #1b5e20;">➕ নতুন মূল ফোল্ডার তৈরি</h4>
+                    <input type="text" id="newFolderName" placeholder="মূল বিষয়ের নাম (যেমন: ১. কৃষি প্রযুক্তি)">
+                    <button onclick="createFolder()" style="background: #0277bd; width:100%; margin-top:5px;">মূল ফোল্ডার তৈরি করুন</button>
+                </div>
+
+                <div id="qbSubFolderCreateBox" style="background: #e8f5e9; padding: 12px; border-radius: 6px; margin-bottom: 15px; display: none;">
+                    <h4 style="margin: 0 0 6px 0; color: #1b5e20;">➕ এই ফোল্ডারে নতুন সাব-ফোল্ডার তৈরি</h4>
+                    <input type="text" id="newSubCategoryInput" placeholder="সাব-ফোল্ডারের নাম (যেমন: ২০২৩ সালের প্রশ্ন / Math)">
+                    <button onclick="createSubCategoryFolder()" style="background: #1b5e20; width:100%; margin-top:5px;">সাব-ফোল্ডার তৈরি করুন</button>
+                </div>
+
+                <div id="qbQuestionCreateBox" style="background: #e1f5fe; padding: 12px; border-radius: 6px; margin-bottom: 15px; display: none;">
+                    <h4 style="margin: 0 0 6px 0; color: #01579b;">➕ এই সাব-ফোল্ডারে প্রশ্ন যুক্ত করুন (এককভাবে)</h4>
+                    <input type="text" id="newQ" placeholder="প্রশ্ন...">
+                    <input type="text" id="optA" placeholder="অপশন A">
+                    <input type="text" id="optB" placeholder="অপশন B">
+                    <input type="text" id="optC" placeholder="অপশন C">
+                    <input type="text" id="optD" placeholder="অপশন D">
+                    <select id="correctOpt">
+                        <option value="0">সঠিক উত্তর: A</option>
+                        <option value="1">সঠিক উত্তর: B</option>
+                        <option value="2">সঠিক উত্তর: C</option>
+                        <option value="3">সঠিক উত্তর: D</option>
+                    </select>
+                    <button onclick="mainAdminAddQuestion()" style="background: #01579b; width:100%; margin-top:5px;">প্রশ্ন যুক্ত করুন</button>
+
+                    <div style="margin-top: 15px; border-top: 1px dashed #01579b; padding-top: 10px;">
+                        <h4 style="margin: 0 0 6px 0; color: #01579b;">📥 Bulk Import (একাধিক প্রশ্ন একসাথে)</h4>
+                        <textarea id="bulkDataBox" rows="4" placeholder="{ question: '...', options: [{text: 'A) ...', isCorrect: true}, ...] }, ..."></textarea>
+                        <button onclick="bulkImportQuestions()" style="background: #0277bd; width:100%; margin-top:5px;">একাধিক প্রশ্ন একসাথে যুক্ত করুন</button>
+                    </div>
+                </div>
+
+                <div id="qbViewContainer"></div>
+            </div>
+
+            <!-- ২. নোটস / পিডিএফ ম্যানেজার -->
+            <div class="admin-section" style="border-color: #0d47a1;">
+                <h3 style="color: #0d47a1; margin-top:0; border-bottom: 2px solid #0d47a1; padding-bottom: 5px;">📥 ২. নোটস ও পিডিএফ ম্যানেজার</h3>
+                
+                <div style="margin-bottom: 12px;">
+                    <input type="text" id="noteGlobalSearchBox" onkeyup="filterNoteGlobal()" placeholder="🔍 নোটস, তারিখ (YYYY-MM-DD) অথবা এডমিনের নাম দিয়ে সার্চ করুন..." style="border: 2px solid #0d47a1; background: #e3f2fd; font-weight: bold;">
+                </div>
+
+                <div id="noteBreadcrumb" style="font-weight: bold; color: #555; margin-bottom: 10px; font-size: 14px;"></div>
+                <div id="noteBackBtnContainer" style="margin-bottom: 10px;"></div>
+
+                <div id="noteMainFolderCreateBox" style="background: #e3f2fd; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 6px 0; color: #0d47a1;">➕ নতুন নোট মূল ফোল্ডার তৈরি</h4>
+                    <input type="text" id="newNoteFolderName" placeholder="নোট মূল ফোল্ডারের নাম (যেমন: বাংলা নোটস)">
+                    <button onclick="createNoteFolder()" style="background: #0d47a1; width:100%; margin-top:5px;">নোট ফোল্ডার তৈরি করুন</button>
+                </div>
+
+                <div id="noteSubFolderCreateBox" style="background: #fce4ec; padding: 12px; border-radius: 6px; margin-bottom: 15px; display: none;">
+                    <h4 style="margin: 0 0 6px 0; color: #880e4f;">➕ এই ফোল্ডারে নতুন সাব-ফোল্ডার তৈরি</h4>
+                    <input type="text" id="newNoteSubInput" placeholder="সাব-ফোল্ডারের নাম (যেমন: ব্যাকরণ নোটস)">
+                    <button onclick="createNoteSubFolder()" style="background: #880e4f; width:100%; margin-top:5px;">সাব-ফোল্ডার তৈরি করুন</button>
+                </div>
+
+                <div id="noteCreateBox" style="background: #ede7f6; padding: 12px; border-radius: 6px; margin-bottom: 15px; display: none;">
+                    <h4 style="margin: 0 0 6px 0; color: #4527a0;">➕ এই সাব-ফোল্ডারে নোট বা পিডিএফ প্রকাশ করুন</h4>
+                    <input type="text" id="noteTitle" placeholder="নোটের শিরোনাম">
+                    <input type="text" id="noteLink" placeholder="ড্রাইভ বা ডাউনলোড লিংক (ঐচ্ছিক)">
+                    <textarea id="noteContent" rows="3" placeholder="নোটের বিস্তারিত বিবরণ..."></textarea>
+                    <button onclick="mainAdminAddNote()" style="background: #4527a0; width:100%; margin-top:5px;">নোট প্রকাশ করুন</button>
+                </div>
+
+                <div id="noteViewContainer"></div>
+            </div>
+
+            <!-- গোপন ব্যাকআপ এন্ড রিস্টোর প্যানেল (দুটি কোলন :: এর মাঝে লুকানো) -->
+            <div class="secret-trigger" onclick="toggleSecretBackup()">
+                : <span id="secretToggleText">প্যানেল লক করা</span> :
+            </div>
+
+            <div id="secretBackupBox" class="secret-backup-box">
+                <h4 style="margin:0 0 8px 0; color: #38bdf8; font-size: 14px;">🔒 সিক্রেট ডাটা ব্যাকআপ ও রিস্টোর প্যানেল</h4>
+                <p style="font-size: 11px; color: #94a3b8; margin-bottom: 10px;">সম্পূর্ণ ডাটাবেজ (প্রশ্নব্যাংক ও নোটস) ব্যাকআপ ফাইল হিসেবে ডাউনলোড করুন অথবা অন্য কোথাও ব্যবহার বা রি-স্টোর করার জন্য আপলোড করুন।</p>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="downloadSecretBackup()" style="background: #0284c7; flex: 1; padding: 8px; border-radius: 4px; font-weight: bold; border:none; color:#fff; cursor:pointer;">📥 ডাটা ব্যাকআপ ডাউনলোড</button>
+                    <label style="background: #059669; flex: 1; padding: 8px; border-radius: 4px; font-weight: bold; text-align: center; cursor: pointer; color: #fff;">
+                        📤 ব্যাকআপ রিস্টোর
+                        <input type="file" id="restoreFile" accept=".json" onchange="restoreSecretBackup(event)" style="display: none;">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Box for Editing Questions/Notes -->
+    <div id="editModal" class="modal-bg">
+        <div class="modal-box">
+            <h3 id="modalTitle" style="margin-top:0; color:#2e7d32; font-weight:bold; font-size:16px; margin-bottom: 10px;">সম্পাদনা করুন</h3>
+            <div id="modalBody"></div>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button onclick="saveModalEdit()" style="background:#2e7d32; flex:1;">সংরক্ষণ করুন</button>
+                <button onclick="closeModal()" style="background:#d32f2f; flex:1;">বাতিল</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-200 text-center py-3 text-xs text-slate-600 mt-6">
+        &copy; 2026 Agri NextGen. All rights reserved.
+    </footer>
+
+    <!-- Firebase Script & Logic -->
+    <script>
+        // সিক্রেট পাসকি (Sabbir2007) চেক করা হচ্ছে
+        const urlParams = new URLSearchParams(window.location.search);
+        const secretKey = urlParams.get('key');
+
+        if (secretKey === "Sabbir2007") {
+            document.getElementById('authBody').style.display = 'block';
+        } else {
+            // চাবি না মিললে মূল ওয়েবসাইটে রিডায়রেক্ট করে দেবে
+            window.location.href = "https://www.mirazbmi.pro.bd";
+        }
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyDabLP7TwsQsL2chhHqoHF2Hyk1Txs7OmQ",
+          authDomain: "agrrinextgen.firebaseapp.com",
+          projectId: "agrrinextgen",
+          storageBucket: "agrrinextgen.firebasestorage.app",
+          messagingSenderId: "605298084120",
+          appId: "1:605298084120:web:7b71ca8993969e3288366d",
+          measurementId: "G-41D7GRYP7J"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentFolders = [];
+        let noteFoldersCache = [];
+        let questionBankData = {}; 
+        let noteBankData = {};     
+
+        let qbLevel = 'main'; 
+        let qbSelectedFolder = '';
+        let qbSelectedSub = '';
+
+        let noteLevel = 'main'; 
+        let noteSelectedFolder = '';
+        let noteSelectedSub = '';
+
+        let editingType = ''; 
+        let editingIndex = -1;
+        let adminEmailGlobal = "";
+
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                adminEmailGlobal = user.email;
+                document.getElementById('login-box').classList.add('hidden');
+                document.getElementById('admin-dashboard').classList.remove('hidden');
+                document.getElementById('logged-user-email').innerText = `লগইনকৃত এডমিন: ${user.email}`;
+                loadAllAdminData();
+                loadStatistics();
+                loadNoticeSettings();
+                loadSubAdmins();
+            }
+        });
+
+        document.getElementById('admin-login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            let email = document.getElementById('admin-email').value.trim();
+            let password = document.getElementById('admin-password').value.trim();
+            auth.signInWithEmailAndPassword(email, password).catch(() => {
+                document.getElementById('login-error').innerText = "লগইন ব্যর্থ হয়েছে!";
+            });
+        });
+
+        function adminLogout() {
+            auth.signOut().then(() => {
+                document.getElementById('admin-dashboard').classList.add('hidden');
+                document.getElementById('login-box').classList.remove('hidden');
+            });
+        }
+
+        // --- সাব-এডমিন ম্যানেজমেন্ট লজিক ---
+        function createNewSubAdmin() {
+            let name = document.getElementById('subAdminName').value.trim();
+            let email = document.getElementById('subAdminEmail').value.trim();
+            let password = document.getElementById('subAdminPassword').value.trim();
+
+            if(!name || !email || !password) {
+                alert("⚠️ সাব-এডমিনের নাম, ইমেল ও পাসওয়ার্ড সব ঘর পূরণ করুন!");
+                return;
+            }
+
+            let secondaryApp = firebase.initializeApp(firebaseConfig, "SecondaryApp");
+            let secondaryAuth = secondaryApp.auth();
+
+            secondaryAuth.createUserWithEmailAndPassword(email, password).then((userCredential) => {
+                let uid = userCredential.user.uid;
+                db.collection("subAdmins").doc(uid).set({
+                    name: name,
+                    email: email,
+                    createdAt: new Date().toISOString()
+                }).then(() => {
+                    alert(`✅ সাব-এডমিন "${name}" (${email}) সফলভাবে তৈরি হয়েছে!`);
+                    document.getElementById('subAdminName').value = '';
+                    document.getElementById('subAdminEmail').value = '';
+                    document.getElementById('subAdminPassword').value = '';
+                    secondaryApp.delete();
+                    loadSubAdmins();
+                });
+            }).catch((error) => {
+                alert("❌ সাব-এডমিন তৈরি ব্যর্থ হয়েছে: " + error.message);
+                secondaryApp.delete();
+            });
+        }
+
+        function loadSubAdmins() {
+            let container = document.getElementById('subAdminListContainer');
+            container.innerHTML = "<p style='color:#666; font-size:13px;'>লোড হচ্ছে...</p>";
+
+            db.collection("subAdmins").get().then((snapshot) => {
+                container.innerHTML = "";
+                if(snapshot.empty) {
+                    container.innerHTML = "<p style='color:#666; font-size:13px;'>কোনো সাব-এডমিন নেই।</p>";
+                    return;
+                }
+
+                snapshot.forEach((doc) => {
+                    let data = doc.data();
+                    let uid = doc.id;
+
+                    let div = document.createElement('div');
+                    div.style.cssText = "background:#fff; border:1px solid #ddd; padding:8px 12px; margin-top:5px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;";
+                    div.innerHTML = `
+                        <div>
+                            <span style="font-size:13px; font-weight:bold; color:#1e293b; display:block;">👤 নাম: ${data.name || 'নাম নেই'}</span>
+                            <span style="font-size:11px; color:#64748b;">✉️ ইমেল: ${data.email}</span>
+                        </div>
+                        <button onclick="removeSubAdmin('${uid}')" class="btn-delete" style="padding:4px 8px; font-size:11px;">রিমুভ করুন</button>
+                    `;
+                    container.appendChild(div);
+                });
+            });
+        }
+
+        function removeSubAdmin(uid) {
+            if(!confirm("⚠️ এই সাব-এডমিনকে রিমুভ করতে চান?")) return;
+
+            db.collection("subAdmins").doc(uid).delete().then(() => {
+                alert("✅ সাব-এডমিন সফলভাবে তালিকা থেকে রিমুভ হয়েছে!");
+                loadSubAdmins();
+            }).catch((error) => {
+                alert("❌ রিমুভ করতে সমস্যা হয়েছে: " + error.message);
+            });
+        }
+
+        function loadAllAdminData() {
+            db.collection("settings").doc("main_config").get().then((doc) => {
+                if(doc.exists) {
+                    let data = doc.data();
+                    currentFolders = data.folders || [];
+                    noteFoldersCache = data.noteFolders || [];
+                }
+                
+                db.collection("questionBank").get().then((snapshot) => {
+                    questionBankData = {};
+                    let totalQBString = "";
+                    snapshot.forEach((doc) => {
+                        let dt = doc.data();
+                        totalQBString += JSON.stringify(dt);
+                        let f = dt.folderName;
+                        let c = dt.category;
+                        if(!questionBankData[f]) questionBankData[f] = {};
+                        questionBankData[f][c] = dt.questions || [];
+                    });
+                    renderQBView();
+                    calculateStorageUsage(totalQBString);
+                });
+
+                db.collection("noteBank").get().then((snapshot) => {
+                    noteBankData = {};
+                    snapshot.forEach((doc) => {
+                        let dt = doc.data();
+                        let f = dt.folderName;
+                        let s = dt.subFolder;
+                        if(!noteBankData[f]) noteBankData[f] = {};
+                        noteBankData[f][s] = dt.notes || [];
+                    });
+                    renderNoteView();
+                });
+            });
+        }
+
+        function loadStatistics() {
+            let todayStr = new Date().toISOString().split('T')[0];
+            
+            db.collection("statistics").doc(todayStr).get().then((doc) => {
+                if(doc.exists) {
+                    let data = doc.data();
+                    document.getElementById('statTodayVisit').innerText = data.totalVisits || 0;
+                }
+            });
+
+            db.collection("statistics").get().then((snapshot) => {
+                let grandTotalVisits = 0;
+                snapshot.forEach((doc) => {
+                    let dt = doc.data();
+                    if(dt.totalVisits) {
+                        grandTotalVisits += dt.totalVisits;
+                    }
+                });
+                document.getElementById('statTotalVisit').innerText = grandTotalVisits;
+            });
+
+            document.getElementById('statOnline').innerText = Math.floor(Math.random() * 4) + 3;
+        }
+
+        function calculateStorageUsage(extraDataString) {
+            let totalJSONSize = JSON.stringify(currentFolders).length + JSON.stringify(noteFoldersCache).length + JSON.stringify(questionBankData).length + JSON.stringify(noteBankData).length + extraDataString.length;
+            
+            let usedBytes = totalJSONSize; 
+            let usedKB = (usedBytes / 1024).toFixed(2);
+            let usedMB = (usedKB / 1024).toFixed(3);
+            let remainingMB = (1024 - usedMB).toFixed(2);
+
+            if(usedMB < 1) {
+                document.getElementById('usedStorageSize').innerText = `${usedKB} KB`;
+            } else {
+                document.getElementById('usedStorageSize').innerText = `${usedMB} MB`;
+            }
+            
+            document.getElementById('remainingStorageSize').innerText = `${remainingMB} MB`;
+            
+            let percentage = (usedMB / 1024) * 100;
+            if(percentage < 0.1) percentage = 0.5; 
+            document.getElementById('storageProgressBar').style.width = `${percentage}%`;
+        }
+
+        function toggleSecretBackup() {
+            let box = document.getElementById('secretBackupBox');
+            let txt = document.getElementById('secretToggleText');
+            if(box.style.display === 'block') {
+                box.style.display = 'none';
+                txt.innerText = 'প্যানেল লক করা';
+            } else {
+                box.style.display = 'block';
+                txt.innerText = 'প্যানেল আনলকড';
+            }
+        }
+
+        function loadNoticeSettings() {
+            db.collection("settings").doc("main_config").get().then((doc) => {
+                if(doc.exists) {
+                    let data = doc.data();
+                    if(data.siteNotice) {
+                        document.getElementById('noticeTextInput').value = data.siteNotice;
+                        updateAdminNoticeDisplay(data.siteNotice, data.noticeMode || "scroll");
+                    }
+                    if(data.noticeMode) {
+                        document.getElementById('noticeModeSelect').value = data.noticeMode;
+                    }
+                }
+            });
+        }
+
+        function saveNoticeSettings() {
+            let text = document.getElementById('noticeTextInput').value.trim();
+            let mode = document.getElementById('noticeModeSelect').value;
+            if(!text) { alert("⚠️ নোটিশের টেক্সট দিন!"); return; }
+
+            db.collection("settings").doc("main_config").set({
+                siteNotice: text,
+                noticeMode: mode
+            }, { merge: true }).then(() => {
+                alert("✅ নোটিশ সফলভাবে আপডেট হয়েছে!");
+                updateAdminNoticeDisplay(text, mode);
+            });
+        }
+
+        function updateAdminNoticeDisplay(text, mode) {
+            let wrapper = document.getElementById('adminNoticeWrapper');
+            if(mode === "scroll") {
+                wrapper.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="5" id="runningNoticeText">${text}</marquee>`;
+            } else {
+                wrapper.innerHTML = `<div style="text-align: center; width: 100%;" id="runningNoticeText">${text}</div>`;
+            }
+        }
+
+        function downloadSecretBackup() {
+            let backupData = {
+                folders: currentFolders,
+                noteFolders: noteFoldersCache,
+                questionBank: questionBankData,
+                noteBank: noteBankData,
+                backupDate: new Date().toISOString()
+            };
+            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+            let downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `agri_nextgen_backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function restoreSecretBackup(event) {
+            let file = event.target.files[0];
+            if(!file) return;
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let parsed = JSON.parse(e.target.result);
+                    if(confirm("⚠️ ব্যাকআপ ফাইল থেকে ডাটা রিস্টোর করতে চান? এটি বর্তমান ডাটা ওভাররাইট করতে পারে।")) {
+                        db.collection("settings").doc("main_config").set({
+                            folders: parsed.folders || [],
+                            noteFolders: parsed.noteFolders || []
+                        }, { merge: true }).then(() => {
+                            alert("✅ ব্যাকআপ সফলভাবে রিস্টোর হয়েছে!");
+                            loadAllAdminData();
+                        });
+                    }
+                } catch(err) {
+                    alert("❌ ব্যাকআপ ফাইলটি সঠিক JSON ফরম্যাটে নেই!");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function createFolder() {
+            let name = document.getElementById('newFolderName').value.trim();
+            if(!name) { alert("⚠️ নাম দিন!"); return; }
+            if(currentFolders.includes(name)) { alert("⚠️ ইতিমধ্যে রয়েছে!"); return; }
+
+            currentFolders.push(name);
+            db.collection("settings").doc("main_config").set({ folders: currentFolders }, { merge: true }).then(() => {
+                db.collection("questionBank").doc(name + "_সাধারণ প্রশ্ন").set({
+                    folderName: name, category: "সাধারণ প্রশ্ন", questions: []
+                }).then(() => {
+                    document.getElementById('newFolderName').value = '';
+                    loadAllAdminData();
+                });
+            });
+        }
+
+        function editMainFolder(folderName) {
+            let newName = prompt("মূল ফোল্ডারের নতুন নাম দিন:", folderName);
+            if(!newName || newName.trim() === "" || newName === folderName) return;
+            newName = newName.trim();
+
+            let idx = currentFolders.indexOf(folderName);
+            if(idx !== -1) {
+                currentFolders[idx] = newName;
+                db.collection("settings").doc("main_config").set({ folders: currentFolders }, { merge: true }).then(() => {
+                    loadAllAdminData();
+                });
+            }
+        }
+
+        function deleteMainFolder(folderName) {
+            if(!confirm(`⚠️ "${folderName}" ফোল্ডারটি ডিলিট করতে চান?`)) return;
+            currentFolders = currentFolders.filter(f => f !== folderName);
+            db.collection("settings").doc("main_config").set({ folders: currentFolders }, { merge: true }).then(() => {
+                loadAllAdminData();
+            });
+        }
+
+        function createSubCategoryFolder() {
+            let subName = document.getElementById('newSubCategoryInput').value.trim();
+            if(!subName) { alert("⚠️ সাব-ফোল্ডারের নাম দিন!"); return; }
+
+            let docId = qbSelectedFolder + "_" + subName;
+            db.collection("questionBank").doc(docId).set({
+                folderName: qbSelectedFolder, category: subName, questions: []
+            }).then(() => {
+                document.getElementById('newSubCategoryInput').value = '';
+                loadAllAdminData();
+            });
+        }
+
+        function editSubFolder(subName) {
+            let newName = prompt("সাব-ফোল্ডারের নতুন নাম দিন:", subName);
+            if(!newName || newName.trim() === "" || newName === subName) return;
+            newName = newName.trim();
+
+            let oldDocId = qbSelectedFolder + "_" + subName;
+            let newDocId = qbSelectedFolder + "_" + newName;
+            let questions = questionBankData[qbSelectedFolder][subName] || [];
+
+            db.collection("questionBank").doc(newDocId).set({
+                folderName: qbSelectedFolder, category: newName, questions: questions
+            }).then(() => {
+                db.collection("questionBank").doc(oldDocId).delete().then(() => {
+                    loadAllAdminData();
+                });
+            });
+        }
+
+        function deleteSubFolder(subName) {
+            if(!confirm(`⚠️ "${subName}" সাব-ফোল্ডারটি ডিলিট করতে চান?`)) return;
+            let docId = qbSelectedFolder + "_" + subName;
+            db.collection("questionBank").doc(docId).delete().then(() => {
+                loadAllAdminData();
+            });
+        }
+
+        function mainAdminAddQuestion() {
+            let q = document.getElementById('newQ').value.trim();
+            let optA = document.getElementById('optA').value.trim();
+            let optB = document.getElementById('optB').value.trim();
+            let optC = document.getElementById('optC').value.trim();
+            let optD = document.getElementById('optD').value.trim();
+            let correctIdx = parseInt(document.getElementById('correctOpt').value);
+
+            if(!q || !optA || !optB || !optC || !optD) { alert("⚠️ সব ঘর পূরণ করুন!"); return; }
+
+            let currentDate = new Date().toISOString().split('T')[0];
+
+            let docId = qbSelectedFolder + "_" + qbSelectedSub;
+            let questions = questionBankData[qbSelectedFolder][qbSelectedSub] || [];
+            questions.push({
+                question: q,
+                addedBy: adminEmailGlobal || "মেইন এডমিন",
+                addedDate: currentDate,
+                options: [
+                    { text: "A) " + optA, isCorrect: correctIdx === 0 },
+                    { text: "B) " + optB, isCorrect: correctIdx === 1 },
+                    { text: "C) " + optC, isCorrect: correctIdx === 2 },
+                    { text: "D) " + optD, isCorrect: correctIdx === 3 }
+                ]
+            });
+
+            db.collection("questionBank").doc(docId).update({ questions: questions }).then(() => {
+                alert("✅ প্রশ্ন যুক্ত হয়েছে!");
+                document.getElementById('newQ').value = '';
+                document.getElementById('optA').value = '';
+                document.getElementById('optB').value = '';
+                document.getElementById('optC').value = '';
+                document.getElementById('optD').value = '';
+                loadAllAdminData();
+            });
+        }
+
+        function bulkImportQuestions() {
+            let rawData = document.getElementById('bulkDataBox').value.trim();
+            if(!rawData) { alert("⚠️ ডাটা দিন!"); return; }
+
+            try {
+                let cleanData = rawData.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+                if(!cleanData.startsWith("[")) cleanData = "[" + cleanData;
+                if(!cleanData.endsWith("]")) cleanData = cleanData + "]";
+                let parsed = eval("(" + cleanData + ")");
+                
+                let currentDate = new Date().toISOString().split('T')[0];
+                parsed.forEach(item => {
+                    if(!item.addedBy) item.addedBy = adminEmailGlobal || "মেইন এডমিন";
+                    if(!item.addedDate) item.addedDate = currentDate;
+                });
+
+                let docId = qbSelectedFolder + "_" + qbSelectedSub;
+                let questions = questionBankData[qbSelectedFolder][qbSelectedSub] || [];
+                questions = questions.concat(parsed);
+
+                db.collection("questionBank").doc(docId).update({ questions: questions }).then(() => {
+                    alert(`✅ সফলভাবে ${parsed.length} টি প্রশ্ন যুক্ত হয়েছে!`);
+                    document.getElementById('bulkDataBox').value = '';
+                    loadAllAdminData();
+                });
+            } catch (err) { alert("❌ ফরম্যাট সঠিক নয়!"); }
+        }
+
+        function openEditQuestionModal(folderName, subName, idx) {
+            qbSelectedFolder = folderName;
+            qbSelectedSub = subName;
+            editingType = 'question';
+            editingIndex = idx;
+            let qObj = questionBankData[folderName][subName][idx];
+
+            let optTexts = ['', '', '', ''];
+            if(qObj.options) {
+                for(let i=0; i<4; i++) {
+                    if(qObj.options[i]) optTexts[i] = qObj.options[i].text.replace(/^[A-D]\)\s*/, '');
+                }
+            }
+            let correctSelected = 0;
+            if(qObj.options) {
+                let found = qObj.options.findIndex(o => o.isCorrect);
+                if(found !== -1) correctSelected = found;
+            }
+
+            document.getElementById('modalTitle').innerText = "প্রশ্ন ও অপশন এডিট করুন";
+            document.getElementById('modalBody').innerHTML = `
+                <div style="margin-bottom: 8px;">
+                    <label style="font-size:12px; font-weight:bold; display:block;">প্রশ্ন:</label>
+                    <input type="text" id="editQInput" value="${qObj.question}" style="margin:2px 0 8px 0;">
+                </div>
+                
+                <div class="edit-grid">
+                    <div>
+                        <label style="font-size:12px; font-weight:bold; display:block;">অপশন A:</label>
+                        <input type="text" id="editOptA" value="${optTexts[0]}" style="margin:2px 0 8px 0;">
+                    </div>
+                    <div>
+                        <label style="font-size:12px; font-weight:bold; display:block;">অপশন B:</label>
+                        <input type="text" id="editOptB" value="${optTexts[1]}" style="margin:2px 0 8px 0;">
+                    </div>
+                    <div>
+                        <label style="font-size:12px; font-weight:bold; display:block;">অপশন C:</label>
+                        <input type="text" id="editOptC" value="${optTexts[2]}" style="margin:2px 0 8px 0;">
+                    </div>
+                    <div>
+                        <label style="font-size:12px; font-weight:bold; display:block;">অপশন D:</label>
+                        <input type="text" id="editOptD" value="${optTexts[3]}" style="margin:2px 0 8px 0;">
+                    </div>
+                </div>
+
+                <div style="margin-top: 5px;">
+                    <label style="font-size:12px; font-weight:bold; display:block;">সঠিক উত্তর:</label>
+                    <select id="editCorrectOpt" style="margin:2px 0 0 0;">
+                        <option value="0" ${correctSelected===0?'selected':''}>সঠিক উত্তর: A</option>
+                        <option value="1" ${correctSelected===1?'selected':''}>সঠিক উত্তর: B</option>
+                        <option value="2" ${correctSelected===2?'selected':''}>সঠিক উত্তর: C</option>
+                        <option value="3" ${correctSelected===3?'selected':''}>সঠিক উত্তর: D</option>
+                    </select>
+                </div>
+            `;
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function deleteQuestionItem(folderName, subName, idx) {
+            if(!confirm("⚠️ প্রশ্নটি ডিলিট করতে চান?")) return;
+            let docId = folderName + "_" + subName;
+            let questions = questionBankData[folderName][subName] || [];
+            questions.splice(idx, 1);
+
+            db.collection("questionBank").doc(docId).update({ questions: questions }).then(() => {
+                loadAllAdminData();
+            });
+        }
+
+        function filterQBGlobal() {
+            renderQBView();
+        }
+
+        function renderQBView() {
+            let container = document.getElementById('qbViewContainer');
+            let breadcrumb = document.getElementById('qbBreadcrumb');
+            let backBtn = document.getElementById('qbBackBtnContainer');
+            
+            let searchQuery = document.getElementById('qbGlobalSearchBox') ? document.getElementById('qbGlobalSearchBox').value.toLowerCase().trim() : "";
+
+            if(searchQuery) {
+                document.getElementById('qbMainFolderCreateBox').style.display = 'none';
+                document.getElementById('qbSubFolderCreateBox').style.display = 'none';
+                document.getElementById('qbQuestionCreateBox').style.display = 'none';
+                breadcrumb.innerText = "🔍 সার্চ রেজাল্ট (প্রশ্ন, তারিখ বা এডমিন নাম অনুযায়ী):";
+                backBtn.innerHTML = `<button onclick="document.getElementById('qbGlobalSearchBox').value=''; renderQBView();" style="background:#555;">⬅️ স্বাভাবিক ভিউতে ফিরে যান</button>`;
+                container.innerHTML = "";
+
+                let foundCount = 0;
+                for(let f in questionBankData) {
+                    for(let s in questionBankData[f]) {
+                        let qList = questionBankData[f][s];
+                        qList.forEach((q, idx) => {
+                            let qText = q.question.toLowerCase();
+                            let qDate = (q.addedDate || "").toLowerCase();
+                            let qAdmin = (q.addedBy || "").toLowerCase();
+
+                            if(qText.includes(searchQuery) || qDate.includes(searchQuery) || qAdmin.includes(searchQuery)) {
+                                foundCount++;
+                                let optList = q.options ? q.options.map(o => `<br><small>${o.text} ${o.isCorrect?'✅':''}</small>`).join('') : '';
+                                let metaText = `<br><small style="color:#0277bd;">📂 [${f} > ${s}] | 👤 এড করেছে: ${q.addedBy || 'অজানা'} | 📅 তারিখ: ${q.addedDate || 'তারিখ নেই'}</small>`;
+
+                                let div = document.createElement('div');
+                                div.style.cssText = "background:#fff; border:1px solid #ddd; padding:8px; margin-top:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;";
+                                div.innerHTML = `<div><b>${foundCount}.</b> ${q.question} ${metaText} ${optList}</div> <div style="display:flex; gap:5px;"><button class="btn-edit" onclick="openEditQuestionModal('${f}', '${s}', ${idx})">এডিট</button><button class="btn-delete" onclick="deleteQuestionItem('${f}', '${s}', ${idx})">ডিলিট</button></div>`;
+                                container.appendChild(div);
+                            }
+                        });
+                    }
+                }
+                if(foundCount === 0) {
+                    container.innerHTML = "<p style='color:#666;'>কোনো প্রশ্ন পাওয়া যায়নি।</p>";
+                }
+                return;
+            }
+
+            document.getElementById('qbMainFolderCreateBox').style.display = (qbLevel === 'main') ? 'block' : 'none';
+            document.getElementById('qbSubFolderCreateBox').style.display = (qbLevel === 'sub') ? 'block' : 'none';
+            document.getElementById('qbQuestionCreateBox').style.display = (qbLevel === 'questions') ? 'block' : 'none';
+            backBtn.innerHTML = '';
+            container.innerHTML = '';
+
+            if(qbLevel === 'main') {
+                breadcrumb.innerText = "লোকেশন: মূল ফোল্ডারসমূহ";
+                currentFolders.forEach(folder => {
+                    let div = document.createElement('div');
+                    div.className = 'folder-row';
+                    div.innerHTML = `
+                        <span class="folder-title" onclick="enterQBFolder('${folder}')">📁 ${folder}</span>
+                        <div style="display:flex; gap:5px;">
+                            <button class="btn-edit" onclick="editMainFolder('${folder}')">এডিট</button>
+                            <button class="btn-delete" onclick="deleteMainFolder('${folder}')">ডিলিট</button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            } else if(qbLevel === 'sub') {
+                breadcrumb.innerText = `লোকেশন: ${qbSelectedFolder} > সাব-ফোল্ডারসমূহ`;
+                backBtn.innerHTML = `<button onclick="qbLevel='main'; renderQBView();" style="background:#555;">⬅️ পেছনের ফোল্ডারে যান</button>`;
+                
+                let subs = questionBankData[qbSelectedFolder] ? Object.keys(questionBankData[qbSelectedFolder]) : [];
+                subs.forEach(sub => {
+                    let div = document.createElement('div');
+                    div.className = 'folder-row';
+                    div.innerHTML = `
+                        <span class="folder-title" onclick="enterQBSub('${sub}')">📌 ${sub}</span>
+                        <div style="display:flex; gap:5px;">
+                            <button class="btn-edit" onclick="editSubFolder('${sub}')">এডিট</button>
+                            <button class="btn-delete" onclick="deleteSubFolder('${sub}')">ডিলিট</button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            } else if(qbLevel === 'questions') {
+                breadcrumb.innerText = `লোকেশন: ${qbSelectedFolder} > ${qbSelectedSub} > প্রশ্নসমূহ`;
+                backBtn.innerHTML = `<button onclick="qbLevel='sub'; renderQBView();" style="background:#555;">⬅️ পেছনের ফোল্ডারে যান</button>`;
+                
+                let questions = (questionBankData[qbSelectedFolder] && questionBankData[qbSelectedFolder][qbSelectedSub]) ? questionBankData[qbSelectedFolder][qbSelectedSub] : [];
+                if(questions.length === 0) { container.innerHTML = "<p style='color:#666;'>কোনো প্রশ্ন নেই।</p>"; return; }
+
+                questions.forEach((q, idx) => {
+                    let optList = q.options ? q.options.map(o => `<br><small>${o.text} ${o.isCorrect?'✅':''}</small>`).join('') : '';
+                    let metaText = `<br><small style="color:#0277bd;">👤 এড করেছে: ${q.addedBy || 'অজানা'} | 📅 তারিখ: ${q.addedDate || 'তারিখ নেই'}</small>`;
+
+                    let div = document.createElement('div');
+                    div.style.cssText = "background:#fff; border:1px solid #ddd; padding:8px; margin-top:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;";
+                    div.innerHTML = `<div><b>${idx + 1}.</b> ${q.question} ${metaText} ${optList}</div> <div style="display:flex; gap:5px;"><button class="btn-edit" onclick="openEditQuestionModal('${qbSelectedFolder}', '${qbSelectedSub}', ${idx})">এডিট</button><button class="btn-delete" onclick="deleteQuestionItem('${qbSelectedFolder}', '${qbSelectedSub}', ${idx})">ডিলিট</button></div>`;
+                    container.appendChild(div);
+                });
+            }
+        }
+
+        function enterQBFolder(folder) { qbSelectedFolder = folder; qbLevel = 'sub'; renderQBView(); }
+        function enterQBSub(sub) { qbSelectedSub = sub; qbLevel = 'questions'; renderQBView(); }
+
+        function createNoteFolder() {
+            let name = document.getElementById('newNoteFolderName').value.trim();
+            if(!name) { alert("⚠️ নাম দিন!"); return; }
+            if(noteFoldersCache.includes(name)) { alert("⚠️ ইতিমধ্যে রয়েছে!"); return; }
+
+            noteFoldersCache.push(name);
+            db.collection("settings").doc("main_config").set({ noteFolders: noteFoldersCache }, { merge: true }).then(() => {
+                document.getElementById('newNoteFolderName').value = '';
+                loadAllAdminData();
+            });
+        }
+
+        function editNoteMainFolder(folderName) {
+            let newName = prompt("নোট ফোল্ডারের নতুন নাম দিন:", folderName);
+            if(!newName || newName.trim() === "" || newName === folderName) return;
+            newName = newName.trim();
+
+            let idx = noteFoldersCache.indexOf(folderName);
+            if(idx !== -1) {
+                noteFoldersCache[idx] = newName;
+                db.collection("settings").doc("main_config").set({ noteFolders: noteFoldersCache }, { merge: true }).then(() => {
+                    loadAllAdminData();
+                });
+            }
+        }
+
+        function deleteNoteMainFolder(folderName) {
+            if(!confirm(`⚠️ "${folderName}" নোট ফোল্ডারটি ডিলিট করতে চান?`)) return;
+            noteFoldersCache = noteFoldersCache.filter(f => f !== folderName);
+            db.collection("settings").doc("main_config").set({ noteFolders: noteFoldersCache }, { merge: true }).then(() => {
+                loadAllAdminData();
+            });
+        }
+
+        function createNoteSubFolder() {
+            let subName = document.getElementById('newNoteSubInput').value.trim();
+            if(!subName) { alert("⚠️ সাব-ফোল্ডারের নাম দিন!"); return; }
+
+            let docId = noteSelectedFolder + "_" + subName;
+            db.collection("noteBank").doc(docId).set({
+                folderName: noteSelectedFolder, subFolder: subName, notes: []
+            }, { merge: true }).then(() => {
+                document.getElementById('newNoteSubInput').value = '';
+                loadAllAdminData();
+            });
+        }
+
+        function editNoteSubFolder(subName) {
+            let newName = prompt("সাব-ফোল্ডারের নতুন নাম দিন:", subName);
+            if(!newName || newName.trim() === "" || newName === subName) return;
+            newName = newName.trim();
+
+            let oldDocId = noteSelectedFolder + "_" + subName;
+            let newDocId = noteSelectedFolder + "_" + newName;
+            let notes = (noteBankData[noteSelectedFolder] && noteBankData[noteSelectedFolder][subName]) ? noteBankData[noteSelectedFolder][subName] : [];
+
+            db.collection("noteBank").doc(newDocId).set({
+                folderName: noteSelectedFolder, subFolder: newName, notes: notes
+            }).then(() => {
+                db.collection("noteBank").doc(oldDocId).delete().then(() => {
+                    loadAllAdminData();
+                });
+            });
+        }
+
+        function deleteNoteSubFolder(subName) {
+            if(!confirm(`⚠️ "${subName}" সাব-ফোল্ডারটি ডিলিট করতে চান?`)) return;
+            let docId = noteSelectedFolder + "_" + subName;
+            db.collection("noteBank").doc(docId).delete().then(() => {
+                loadAllAdminData();
+            });
+        }
+
+        function mainAdminAddNote() {
+            let title = document.getElementById('noteTitle').value.trim();
+            let link = document.getElementById('noteLink').value.trim() || "#";
+            let content = document.getElementById('noteContent').value.trim();
+
+            if(!title || !content) { alert("⚠️ শিরোনাম বা বিবরণ দিন!"); return; }
+
+            let currentDate = new Date().toISOString().split('T')[0];
+
+            let docId = noteSelectedFolder + "_" + noteSelectedSub;
+            if(!noteBankData[noteSelectedFolder]) noteBankData[noteSelectedFolder] = {};
+            let notes = noteBankData[noteSelectedFolder][noteSelectedSub] || [];
+            
+            notes.push({ 
+                title, 
+                link, 
+                content, 
+                addedBy: adminEmailGlobal || "মেইন এডমিন",
+                addedDate: currentDate
+            });
+
+            db.collection("noteBank").doc(docId).set({
+                folderName: noteSelectedFolder,
+                subFolder: noteSelectedSub,
+                notes: notes
+            }, { merge: true }).then(() => {
+                alert("✅ নোট বা পিডিএফ প্রকাশিত হয়েছে!");
+                document.getElementById('noteTitle').value = '';
+                document.getElementById('noteLink').value = '';
+                document.getElementById('noteContent').value = '';
+                loadAllAdminData();
+            });
+        }
+
+        function openEditNoteModal(folderName, subName, idx) {
+            noteSelectedFolder = folderName;
+            noteSelectedSub = subName;
+            editingType = 'note';
+            editingIndex = idx;
+            let noteObj = noteBankData[folderName][subName][idx];
+
+            document.getElementById('modalTitle').innerText = "নোট বা পিডিএফ এডিট করুন";
+            document.getElementById('modalBody').innerHTML = `
+                <label style="font-size:12px; font-weight:bold; display:block;">শিরোনাম:</label>
+                <input type="text" id="editNoteTitle" value="${noteObj.title}" style="margin:2px 0 8px 0;">
+                <label style="font-size:12px; font-weight:bold; display:block;">লিংক:</label>
+                <input type="text" id="editNoteLink" value="${noteObj.link || '#'}" style="margin:2px 0 8px 0;">
+                <label style="font-size:12px; font-weight:bold; display:block;">বিবরণ:</label>
+                <textarea id="editNoteContent" rows="4" style="margin:2px 0 0 0;">${noteObj.content}</textarea>
+            `;
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function deleteNoteItem(folderName, subName, idx) {
+            if(!confirm("⚠️ নোটটি ডিলিট করতে চান?")) return;
+            let docId = folderName + "_" + subName;
+            let notes = noteBankData[folderName][subName] || [];
+            notes.splice(idx, 1);
+
+            db.collection("noteBank").doc(docId).update({ notes: notes }).then(() => {
+                loadAllAdminData();
+            });
+        }
+
+        function filterNoteGlobal() {
+            renderNoteView();
+        }
+
+        function renderNoteView() {
+            let container = document.getElementById('noteViewContainer');
+            let breadcrumb = document.getElementById('noteBreadcrumb');
+            let backBtn = document.getElementById('noteBackBtnContainer');
+            
+            let searchQuery = document.getElementById('noteGlobalSearchBox') ? document.getElementById('noteGlobalSearchBox').value.toLowerCase().trim() : "";
+
+            if(searchQuery) {
+                document.getElementById('noteMainFolderCreateBox').style.display = 'none';
+                document.getElementById('noteSubFolderCreateBox').style.display = 'none';
+                document.getElementById('noteCreateBox').style.display = 'none';
+                breadcrumb.innerText = "🔍 নোট সার্চ রেজাল্ট (শিরোনাম, তারিখ বা এডমিন নাম অনুযায়ী):";
+                backBtn.innerHTML = `<button onclick="document.getElementById('noteGlobalSearchBox').value=''; renderNoteView();" style="background:#555;">⬅️ স্বাভাবিক ভিউতে ফিরে যান</button>`;
+                container.innerHTML = "";
+
+                let foundCount = 0;
+                for(let f in noteBankData) {
+                    for(let s in noteBankData[f]) {
+                        let nList = noteBankData[f][s];
+                        nList.forEach((n, idx) => {
+                            let nTitle = n.title.toLowerCase();
+                            let nContent = n.content.toLowerCase();
+                            let nDate = (n.addedDate || "").toLowerCase();
+                            let nAdmin = (n.addedBy || "").toLowerCase();
+
+                            if(nTitle.includes(searchQuery) || nContent.includes(searchQuery) || nDate.includes(searchQuery) || nAdmin.includes(searchQuery)) {
+                                foundCount++;
+                                let metaText = `<br><small style="color:#0d47a1;">📂 [${f} > ${s}] | 👤 এড করেছে: ${n.addedBy || 'অজানা'} | 📅 তারিখ: ${n.addedDate || 'তারিখ নেই'}</small>`;
+
+                                let div = document.createElement('div');
+                                div.style.cssText = "background:#fff; border:1px solid #ddd; padding:8px; margin-top:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;";
+                                div.innerHTML = `<span><b>${foundCount}.</b> ${n.title} ${metaText}</span> <div style="display:flex; gap:5px;"><button class="btn-edit" onclick="openEditNoteModal('${f}', '${s}', ${idx})">এডিট</button><button class="btn-delete" onclick="deleteNoteItem('${f}', '${s}', ${idx})">ডিলিট</button></div>`;
+                                container.appendChild(div);
+                            }
+                        });
+                    }
+                }
+                if(foundCount === 0) {
+                    container.innerHTML = "<p style='color:#666;'>কোনো নোট বা পিডিএফ পাওয়া যায়নি।</p>";
+                }
+                return;
+            }
+
+            document.getElementById('noteMainFolderCreateBox').style.display = (noteLevel === 'main') ? 'block' : 'none';
+            document.getElementById('noteSubFolderCreateBox').style.display = (noteLevel === 'sub') ? 'block' : 'none';
+            document.getElementById('noteCreateBox').style.display = (noteLevel === 'notes') ? 'block' : 'none';
+            backBtn.innerHTML = '';
+            container.innerHTML = '';
+
+            if(noteLevel === 'main') {
+                breadcrumb.innerText = "লোকেশন: নোট মূল ফোল্ডারসমূহ";
+                noteFoldersCache.forEach(folder => {
+                    let div = document.createElement('div');
+                    div.className = 'folder-row';
+                    div.innerHTML = `
+                        <span class="folder-title" onclick="enterNoteFolder('${folder}')">📁 ${folder}</span>
+                        <div style="display:flex; gap:5px;">
+                            <button class="btn-edit" onclick="editNoteMainFolder('${folder}')">এডিট</button>
+                            <button class="btn-delete" onclick="deleteNoteMainFolder('${folder}')">ডিলিট</button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            } else if(noteLevel === 'sub') {
+                breadcrumb.innerText = `লোকেশন: ${noteSelectedFolder} > সাব-ফোল্ডারসমূহ`;
+                backBtn.innerHTML = `<button onclick="noteLevel='main'; renderNoteView();" style="background:#555;">⬅️ পেছনের ফোল্ডারে যান</button>`;
+                
+                let subsFromCache = noteBankData[noteSelectedFolder] ? Object.keys(noteBankData[noteSelectedFolder]) : [];
+                if(subsFromCache.length === 0) {
+                    container.innerHTML = "<p style='color:#666;'>কোনো সাব-ফোল্ডার নেই। নিচে নতুন সাব-ফোল্ডার তৈরি করুন।</p>";
+                    return;
+                }
+
+                subsFromCache.forEach(sub => {
+                    let div = document.createElement('div');
+                    div.className = 'folder-row';
+                    div.innerHTML = `
+                        <span class="folder-title" onclick="enterNoteSub('${sub}')">📌 ${sub}</span>
+                        <div style="display:flex; gap:5px;">
+                            <button class="btn-edit" onclick="editNoteSubFolder('${sub}')">এডিট</button>
+                            <button class="btn-delete" onclick="deleteNoteSubFolder('${sub}')">ডিলিট</button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            } else if(noteLevel === 'notes') {
+                breadcrumb.innerText = `লোকেশন: ${noteSelectedFolder} > ${noteSelectedSub} > নোটসমূহ`;
+                backBtn.innerHTML = `<button onclick="noteLevel='sub'; renderNoteView();" style="background:#555;">⬅️ পেছনের ফোল্ডারে যান</button>`;
+                
+                let notes = (noteBankData[noteSelectedFolder] && noteBankData[noteSelectedFolder][noteSelectedSub]) ? noteBankData[noteSelectedFolder][noteSelectedSub] : [];
+                if(notes.length === 0) { container.innerHTML = "<p style='color:#666;'>কোনো নোট বা পিডিএফ নেই।</p>"; return; }
+
+                notes.forEach((note, idx) => {
+                    let metaText = `<br><small style="color:#0d47a1;">👤 এড করেছে: ${note.addedBy || 'অজানা'} | 📅 তারিখ: ${note.addedDate || 'তারিখ নেই'}</small>`;
+
+                    let div = document.createElement('div');
+                    div.style.cssText = "background:#fff; border:1px solid #ddd; padding:8px; margin-top:5px; border-radius:4px; display:flex; justify-content:space-between; align-items: center;";
+                    div.innerHTML = `<span><b>${idx + 1}.</b> ${note.title} ${metaText}</span> <div style="display:flex; gap:5px;"><button class="btn-edit" onclick="openEditNoteModal('${noteSelectedFolder}', '${noteSelectedSub}', ${idx})">এডিট</button><button class="btn-delete" onclick="deleteNoteItem('${noteSelectedFolder}', '${noteSelectedSub}', ${idx})">ডিলিট</button></div>`;
+                    container.appendChild(div);
+                });
+            }
+        }
+
+        function enterNoteFolder(folder) { noteSelectedFolder = folder; noteLevel = 'sub'; renderNoteView(); }
+        function enterNoteSub(sub) { noteSelectedSub = sub; noteLevel = 'notes'; renderNoteView(); }
+
+        function closeModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        function saveModalEdit() {
+            if(editingType === 'question') {
+                let docId = qbSelectedFolder + "_" + qbSelectedSub;
+                let questions = questionBankData[qbSelectedFolder][qbSelectedSub] || [];
+                let qObj = questions[editingIndex];
+
+                let newQ = document.getElementById('editQInput').value.trim();
+                let optA = document.getElementById('editOptA').value.trim();
+                let optB = document.getElementById('editOptB').value.trim();
+                let optC = document.getElementById('editOptC').value.trim();
+                let optD = document.getElementById('editOptD').value.trim();
+                let correctIdx = parseInt(document.getElementById('editCorrectOpt').value);
+
+                if(!newQ || !optA || !optB || !optC || !optD) { alert("⚠️ সব ঘর পূরণ করুন!"); return; }
+
+                qObj.question = newQ;
+                qObj.options = [
+                    { text: "A) " + optA, isCorrect: correctIdx === 0 },
+                    { text: "B) " + optB, isCorrect: correctIdx === 1 },
+                    { text: "C) " + optC, isCorrect: correctIdx === 2 },
+                    { text: "D) " + optD, isCorrect: correctIdx === 3 }
+                ];
+
+                db.collection("questionBank").doc(docId).update({ questions: questions }).then(() => {
+                    alert("✅ প্রশ্ন সফলভাবে আপডেট হয়েছে!");
+                    closeModal();
+                    loadAllAdminData();
+                });
+            } else if(editingType === 'note') {
+                let docId = noteSelectedFolder + "_" + noteSelectedSub;
+                let notes = noteBankData[noteSelectedFolder][noteSelectedSub] || [];
+                let noteObj = notes[editingIndex];
+
+                let newTitle = document.getElementById('editNoteTitle').value.trim();
+                let newLink = document.getElementById('editNoteLink').value.trim() || "#";
+                let newContent = document.getElementById('editNoteContent').value.trim();
+
+                if(!newTitle || !newContent) { alert("⚠️ শিরোনাম বা বিবরণ দিন!"); return; }
+
+                noteObj.title = newTitle;
+                noteObj.link = newLink;
+                noteObj.content = newContent;
+
+                db.collection("noteBank").doc(docId).update({ notes: notes }).then(() => {
+                    alert("✅ নোট সফলভাবে আপডেট হয়েছে!");
+                    closeModal();
+                    loadAllAdminData();
+                });
+            }
+        }
+    </script>
+</body>
+</html>
