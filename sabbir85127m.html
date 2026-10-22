@@ -39,7 +39,7 @@
         .secret-trigger:hover { color: #0284c7; }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen flex flex-col justify-between" style="display: none;" id="authBody">
+<body class="bg-slate-100 min-h-screen flex flex-col justify-between">
 
     <!-- Header -->
     <header class="bg-emerald-800 text-white shadow-md p-4 flex justify-between items-center">
@@ -262,17 +262,6 @@
 
     <!-- Firebase Script & Logic -->
     <script>
-        // সিক্রেট পাসকি (Sabbir2007) চেক করা হচ্ছে
-        const urlParams = new URLSearchParams(window.location.search);
-        const secretKey = urlParams.get('key');
-
-        if (secretKey === "Sabbir2007") {
-            document.getElementById('authBody').style.display = 'block';
-        } else {
-            // চাবি না মিললে মূল ওয়েবসাইটে রিডায়রেক্ট করে দেবে
-            window.location.href = "https://www.mirazbmi.pro.bd";
-        }
-
         const firebaseConfig = {
           apiKey: "AIzaSyDabLP7TwsQsL2chhHqoHF2Hyk1Txs7OmQ",
           authDomain: "agrrinextgen.firebaseapp.com",
@@ -344,11 +333,13 @@
                 return;
             }
 
+            // সেকেন্ডারি ফায়ারবেস অ্যাপ ইনস্ট্যান্স তৈরি করে সাব-এডমিন তৈরি করা (যাতে মেইন এডমিন লগআউট হয়ে না যায়)
             let secondaryApp = firebase.initializeApp(firebaseConfig, "SecondaryApp");
             let secondaryAuth = secondaryApp.auth();
 
             secondaryAuth.createUserWithEmailAndPassword(email, password).then((userCredential) => {
                 let uid = userCredential.user.uid;
+                // ফায়ারস্টোরে সাব-এডমিনের নাম ও ইমেল সংরক্ষণ
                 db.collection("subAdmins").doc(uid).set({
                     name: name,
                     email: email,
@@ -358,7 +349,7 @@
                     document.getElementById('subAdminName').value = '';
                     document.getElementById('subAdminEmail').value = '';
                     document.getElementById('subAdminPassword').value = '';
-                    secondaryApp.delete();
+                    secondaryApp.delete(); // সেকেন্ডারি অ্যাপ ক্লিনআপ
                     loadSubAdmins();
                 });
             }).catch((error) => {
@@ -444,6 +435,7 @@
             });
         }
 
+        // --- ফায়ারবেস ট্রাফিক ও স্টোরেজ ক্যালকুলেটর লজিক ---
         function loadStatistics() {
             let todayStr = new Date().toISOString().split('T')[0];
             
@@ -471,7 +463,9 @@
         function calculateStorageUsage(extraDataString) {
             let totalJSONSize = JSON.stringify(currentFolders).length + JSON.stringify(noteFoldersCache).length + JSON.stringify(questionBankData).length + JSON.stringify(noteBankData).length + extraDataString.length;
             
+            let totalQuotaBytes = 1024 * 1024 * 1024; 
             let usedBytes = totalJSONSize; 
+            
             let usedKB = (usedBytes / 1024).toFixed(2);
             let usedMB = (usedKB / 1024).toFixed(3);
             let remainingMB = (1024 - usedMB).toFixed(2);
@@ -489,6 +483,7 @@
             document.getElementById('storageProgressBar').style.width = `${percentage}%`;
         }
 
+        // --- সিক্রেট ব্যাকআপ টগল ফাংশন ---
         function toggleSecretBackup() {
             let box = document.getElementById('secretBackupBox');
             let txt = document.getElementById('secretToggleText');
@@ -539,6 +534,7 @@
             }
         }
 
+        // --- ব্যাকআপ ও রিস্টোর লজিক ---
         function downloadSecretBackup() {
             let backupData = {
                 folders: currentFolders,
@@ -579,6 +575,7 @@
             reader.readAsText(file);
         }
 
+        // --- প্রশ্নব্যাংক লজিক ---
         function createFolder() {
             let name = document.getElementById('newFolderName').value.trim();
             if(!name) { alert("⚠️ নাম দিন!"); return; }
@@ -896,6 +893,8 @@
         function enterQBFolder(folder) { qbSelectedFolder = folder; qbLevel = 'sub'; renderQBView(); }
         function enterQBSub(sub) { qbSelectedSub = sub; qbLevel = 'questions'; renderQBView(); }
 
+
+        // --- নোটস / পিডিএফ ম্যানেজার লজিক ---
         function createNoteFolder() {
             let name = document.getElementById('newNoteFolderName').value.trim();
             if(!name) { alert("⚠️ নাম দিন!"); return; }
